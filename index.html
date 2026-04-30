@@ -17,6 +17,7 @@
       <p id="last-save">Rob Hichens · Director of Operations · Bright Beginnings Preschool</p>
     </div>
     <div class="header-right">
+      <button class="btn" id="btn-digest">Weekly digest</button>
       <button class="btn" id="btn-export">Export JSON</button>
       <button class="btn btn-primary" id="btn-add">+ Add task</button>
     </div>
@@ -111,6 +112,10 @@
       </select>
     </div>
     <div class="field">
+      <label>Due date (optional)</label>
+      <input type="date" id="m-due">
+    </div>
+    <div class="field">
       <label>Notes</label>
       <textarea id="m-notes" placeholder="Context, next steps, blockers…"></textarea>
     </div>
@@ -125,17 +130,30 @@
   </div>
 </div>
 
+<!-- Digest Modal -->
+<div class="modal-overlay" id="digest-modal">
+  <div class="modal" style="width:560px;max-height:80vh;overflow-y:auto">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
+      <span></span>
+      <button class="btn" id="btn-close-digest">Close</button>
+    </div>
+    <div id="digest-body"></div>
+  </div>
+</div>
+
 <!-- Toast -->
 <div class="toast" id="toast"></div>
 
 <!-- App — ES module -->
 <script type="module">
-  import { init, openModal, closeModal, addTask, exportData } from "./js/app.js";
+  import { init, openModal, closeModal, addTask, exportData, showDigest, closeDigest } from "./js/app.js";
 
   document.getElementById("btn-add").addEventListener("click", openModal);
   document.getElementById("btn-cancel").addEventListener("click", closeModal);
   document.getElementById("btn-confirm-add").addEventListener("click", addTask);
   document.getElementById("btn-export").addEventListener("click", exportData);
+  document.getElementById("btn-digest").addEventListener("click", showDigest);
+  document.getElementById("btn-close-digest").addEventListener("click", closeDigest);
 
   init();
 </script>

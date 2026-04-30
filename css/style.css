@@ -97,22 +97,22 @@ input[type=text] { width: 200px; }
   display: flex;
   align-items: center;
   justify-content: space-between;
-  font-size: 10px;
+  font-size: 20px;
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.1em;
-  color: var(--text3);
+  color: var(--text2);
   margin: 22px 0 0;
-  padding: 8px 4px 8px 0;
+  padding: 10px 4px 10px 0;
   border-bottom: 1px solid var(--border);
   font-family: 'DM Mono', monospace;
   cursor: pointer;
   user-select: none;
 }
-.section-hd:hover { color: var(--text2); }
-.section-hd-left    { display: flex; align-items: center; gap: 8px; }
-.section-count      { font-size: 10px; font-weight: 500; background: var(--surface2); color: var(--text3); padding: 1px 7px; border-radius: 100px; }
-.section-chevron    { width: 14px; height: 14px; color: var(--text3); transition: transform 0.2s; flex-shrink: 0; }
+.section-hd:hover { color: var(--text); }
+.section-hd-left    { display: flex; align-items: center; gap: 10px; }
+.section-count      { font-size: 13px; font-weight: 500; background: var(--surface2); color: var(--text3); padding: 2px 10px; border-radius: 100px; }
+.section-chevron    { width: 20px; height: 20px; color: var(--text3); transition: transform 0.2s; flex-shrink: 0; }
 .section-hd.collapsed .section-chevron { transform: rotate(-90deg); }
 .section-body       { margin-bottom: 0; }
 .section-body.hidden { display: none; }
@@ -295,6 +295,58 @@ textarea.note-area:focus { border-color: var(--accent); background: var(--surfac
   z-index: 200;
 }
 .toast.show { opacity: 1; }
+
+/* ── Due date badges ── */
+.due-badge { display: inline-flex; align-items: center; font-size: 11px; font-weight: 500; padding: 2px 8px; border-radius: 100px; white-space: nowrap; }
+.due-overdue  { background: var(--red-bg);   color: var(--red); }
+.due-today    { background: #fff3e0;          color: #e65100; }
+.due-soon     { background: var(--amber-bg);  color: var(--amber); }
+.due-upcoming { background: var(--surface2);  color: var(--text2); }
+
+.due-input {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 13px;
+  padding: 5px 8px;
+  border: 1px solid var(--border2);
+  border-radius: var(--radius-sm);
+  background: var(--bg);
+  color: var(--text);
+  outline: none;
+  height: 32px;
+}
+.due-input:focus { border-color: var(--accent); }
+
+.clear-due {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 11px;
+  color: var(--text3);
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 3px 6px;
+  border-radius: var(--radius-sm);
+}
+.clear-due:hover { color: var(--red); background: var(--red-bg); }
+
+/* ── Updated-at label ── */
+.updated-at { font-size: 11px; color: var(--text3); font-family: 'DM Mono', monospace; }
+
+/* ── Weekly digest ── */
+.digest-header { margin-bottom: 16px; }
+.digest-header h2 { font-size: 18px; font-weight: 600; }
+.digest-header p  { font-size: 12px; color: var(--text2); margin-top: 3px; font-family: 'DM Mono', monospace; }
+
+.digest-stats { display: grid; grid-template-columns: repeat(4,1fr); gap: 8px; margin-bottom: 20px; }
+.ds { background: var(--surface2); border-radius: var(--radius-sm); padding: 10px 12px; text-align: center; }
+.ds-n { display: block; font-size: 22px; font-weight: 600; line-height: 1; }
+.ds-l { display: block; font-size: 10px; color: var(--text2); margin-top: 3px; text-transform: uppercase; letter-spacing: 0.05em; }
+
+.digest-section { margin-bottom: 18px; }
+.digest-section-title { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text3); font-family: 'DM Mono', monospace; padding-bottom: 6px; border-bottom: 1px solid var(--border); margin-bottom: 8px; }
+.digest-item { display: flex; align-items: center; gap: 8px; padding: 5px 0; border-bottom: 0.5px solid var(--border); flex-wrap: wrap; }
+.digest-item:last-child { border-bottom: none; }
+.digest-item-title { font-size: 13px; font-weight: 500; }
+.done-item .digest-item-title { color: var(--text2); text-decoration: line-through; font-weight: 400; }
 
 /* ── Empty state ── */
 .empty { text-align: center; color: var(--text3); padding: 3rem; font-size: 13px; }
