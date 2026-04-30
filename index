@@ -1,0 +1,538 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BB Ops Dashboard — Rob Hichens</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #f5f3ef;
+    --surface: #ffffff;
+    --surface2: #f0ede8;
+    --border: #e2ddd6;
+    --border2: #ccc8c0;
+    --text: #1a1816;
+    --text2: #6b6560;
+    --text3: #9b958f;
+    --accent: #2d5a3d;
+    --accent-light: #e8f0eb;
+    --red: #c0392b; --red-bg: #fdf0ee;
+    --amber: #b7650a; --amber-bg: #fdf5e8;
+    --blue: #1a4f8a; --blue-bg: #edf3fb;
+    --green: #2d5a3d; --green-bg: #e8f0eb;
+    --purple: #5b3fa6; --purple-bg: #f0ecfb;
+    --teal: #1a6b6b; --teal-bg: #e8f5f5;
+    --radius: 10px;
+    --radius-sm: 6px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--text); font-size: 14px; min-height: 100vh; }
+  
+  /* Layout */
+  .shell { max-width: 900px; margin: 0 auto; padding: 0 20px 60px; }
+  
+  /* Header */
+  .header { padding: 28px 0 20px; display: flex; align-items: flex-start; justify-content: space-between; border-bottom: 1px solid var(--border); margin-bottom: 20px; }
+  .header-left h1 { font-size: 22px; font-weight: 600; letter-spacing: -0.3px; }
+  .header-left p { font-size: 12px; color: var(--text2); margin-top: 3px; font-family: 'DM Mono', monospace; }
+  .header-right { display: flex; gap: 8px; align-items: center; }
+  .btn { font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 500; padding: 7px 14px; border-radius: var(--radius-sm); border: 1px solid var(--border2); background: var(--surface); color: var(--text); cursor: pointer; transition: background 0.12s; }
+  .btn:hover { background: var(--surface2); }
+  .btn-primary { background: var(--accent); color: #fff; border-color: transparent; }
+  .btn-primary:hover { background: #234a31; }
+
+  /* Stats bar */
+  .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 22px; }
+  .stat { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 14px 16px; }
+  .stat-num { font-size: 28px; font-weight: 600; line-height: 1; }
+  .stat-label { font-size: 11px; color: var(--text2); margin-top: 4px; text-transform: uppercase; letter-spacing: 0.06em; font-weight: 500; }
+  .stat.s-crit .stat-num { color: var(--red); }
+  .stat.s-prog .stat-num { color: var(--amber); }
+  .stat.s-mon .stat-num { color: var(--blue); }
+  .stat.s-done .stat-num { color: var(--green); }
+
+  /* Filters */
+  .filters { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin-bottom: 20px; }
+  .filters label { font-size: 12px; color: var(--text2); font-weight: 500; }
+  select, input[type=text] { font-family: 'DM Sans', sans-serif; font-size: 13px; padding: 6px 10px; border: 1px solid var(--border2); border-radius: var(--radius-sm); background: var(--surface); color: var(--text); height: 32px; outline: none; }
+  select:focus, input[type=text]:focus { border-color: var(--accent); }
+  input[type=text] { width: 200px; }
+
+  /* Section header — collapsible */
+  .section-hd { display: flex; align-items: center; justify-content: space-between; font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.1em; color: var(--text3); margin: 22px 0 0; padding: 8px 4px 8px 0; border-bottom: 1px solid var(--border); font-family: 'DM Mono', monospace; cursor: pointer; user-select: none; }
+  .section-hd:hover { color: var(--text2); }
+  .section-hd-left { display: flex; align-items: center; gap: 8px; }
+  .section-count { font-size: 10px; font-weight: 500; background: var(--surface2); color: var(--text3); padding: 1px 7px; border-radius: 100px; font-family: 'DM Mono', monospace; }
+  .section-chevron { width: 14px; height: 14px; color: var(--text3); transition: transform 0.2s; flex-shrink: 0; }
+  .section-hd.collapsed .section-chevron { transform: rotate(-90deg); }
+  .section-body { margin-bottom: 0; }
+  .section-body.hidden { display: none; }
+  .section-wrap { margin-top: 8px; }
+
+  /* Task cards */
+  .task-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); margin-bottom: 6px; overflow: hidden; transition: border-color 0.12s, box-shadow 0.12s; }
+  .task-card:hover { border-color: var(--border2); }
+  .task-card.expanded { border-color: var(--border2); box-shadow: 0 2px 12px rgba(0,0,0,0.06); }
+  .task-top { display: flex; align-items: center; padding: 13px 16px; cursor: pointer; gap: 12px; }
+  .task-priority { width: 3px; height: 36px; border-radius: 2px; flex-shrink: 0; }
+  .p-critical { background: var(--red); }
+  .p-inprogress { background: var(--amber); }
+  .p-monitoring { background: var(--blue); }
+  .p-done { background: #aaa; }
+  .task-main { flex: 1; min-width: 0; }
+  .task-title-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+  .task-name { font-size: 14px; font-weight: 500; }
+  .task-meta { display: flex; gap: 6px; margin-top: 4px; flex-wrap: wrap; }
+  .badge { display: inline-flex; align-items: center; font-size: 11px; font-weight: 500; padding: 2px 8px; border-radius: 100px; white-space: nowrap; }
+  .b-crit { background: var(--red-bg); color: var(--red); }
+  .b-prog { background: var(--amber-bg); color: var(--amber); }
+  .b-mon { background: var(--blue-bg); color: var(--blue); }
+  .b-done { background: var(--green-bg); color: var(--green); }
+  .b-cr { background: #fdf0e8; color: #b05a1a; }
+  .b-mc { background: #e8f5ee; color: #1a6b45; }
+  .b-fl { background: #edf3fb; color: #1a4f8a; }
+  .b-all { background: var(--surface2); color: var(--text2); }
+  .b-pri { background: #f5ecfb; color: #5b3fa6; }
+  .chevron { width: 18px; height: 18px; flex-shrink: 0; color: var(--text3); transition: transform 0.2s; }
+  .task-card.expanded .chevron { transform: rotate(180deg); }
+
+  /* Detail panel */
+  .task-detail { display: none; padding: 0 16px 16px 31px; border-top: 1px solid var(--border); margin-top: 0; }
+  .task-card.expanded .task-detail { display: block; }
+  .detail-grid { display: grid; gap: 12px; margin-top: 14px; }
+  .det-row { display: flex; gap: 12px; align-items: flex-start; }
+  .det-label { font-size: 12px; font-weight: 500; color: var(--text2); min-width: 100px; flex-shrink: 0; padding-top: 2px; font-family: 'DM Mono', monospace; }
+  .det-val { font-size: 13px; flex: 1; line-height: 1.5; }
+  .dep-text { font-size: 12px; color: var(--text2); font-style: italic; }
+  textarea.note-area { width: 100%; font-family: 'DM Sans', sans-serif; font-size: 13px; padding: 8px 10px; border: 1px solid var(--border2); border-radius: var(--radius-sm); background: var(--bg); color: var(--text); resize: vertical; min-height: 60px; outline: none; line-height: 1.5; }
+  textarea.note-area:focus { border-color: var(--accent); background: var(--surface); }
+  .note-actions { display: flex; justify-content: flex-end; margin-top: 5px; }
+  .save-note { font-family: 'DM Sans', sans-serif; font-size: 12px; font-weight: 500; padding: 4px 12px; border-radius: var(--radius-sm); border: 1px solid var(--border2); background: var(--surface); color: var(--text); cursor: pointer; }
+  .save-note:hover { background: var(--accent-light); border-color: var(--accent); color: var(--accent); }
+  .status-btns { display: flex; gap: 6px; flex-wrap: wrap; }
+  .sb { font-family: 'DM Sans', sans-serif; font-size: 11px; font-weight: 500; padding: 4px 11px; border-radius: 100px; border: 1px solid var(--border2); background: var(--surface); color: var(--text2); cursor: pointer; transition: all 0.1s; }
+  .sb:hover { border-color: var(--border2); background: var(--surface2); }
+  .sb.active-critical { background: var(--red-bg); color: var(--red); border-color: var(--red); }
+  .sb.active-inprogress { background: var(--amber-bg); color: var(--amber); border-color: var(--amber); }
+  .sb.active-monitoring { background: var(--blue-bg); color: var(--blue); border-color: var(--blue); }
+  .sb.active-done { background: var(--green-bg); color: var(--green); border-color: var(--green); }
+
+  /* Delete */
+  .del-btn { font-family: 'DM Sans', sans-serif; font-size: 11px; color: var(--text3); background: none; border: none; cursor: pointer; padding: 4px 8px; border-radius: var(--radius-sm); }
+  .del-btn:hover { color: var(--red); background: var(--red-bg); }
+
+  /* Add task modal */
+  .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.35); z-index: 100; align-items: center; justify-content: center; }
+  .modal-overlay.open { display: flex; }
+  .modal { background: var(--surface); border-radius: 14px; padding: 24px; width: 480px; max-width: 95vw; border: 1px solid var(--border2); box-shadow: 0 8px 40px rgba(0,0,0,0.15); }
+  .modal h3 { font-size: 16px; font-weight: 600; margin-bottom: 16px; }
+  .field { margin-bottom: 12px; }
+  .field label { display: block; font-size: 12px; font-weight: 500; color: var(--text2); margin-bottom: 4px; font-family: 'DM Mono', monospace; }
+  .field input, .field select, .field textarea { width: 100%; font-family: 'DM Sans', sans-serif; font-size: 13px; padding: 7px 10px; border: 1px solid var(--border2); border-radius: var(--radius-sm); background: var(--bg); color: var(--text); outline: none; }
+  .field input:focus, .field select:focus, .field textarea:focus { border-color: var(--accent); background: var(--surface); }
+  .field textarea { resize: vertical; min-height: 70px; }
+  .modal-actions { display: flex; gap: 8px; justify-content: flex-end; margin-top: 16px; }
+
+  /* Empty */
+  .empty { text-align: center; color: var(--text3); padding: 3rem; font-size: 13px; }
+
+  /* Toast */
+  .toast { position: fixed; bottom: 24px; right: 24px; background: var(--text); color: #fff; font-size: 13px; padding: 10px 16px; border-radius: var(--radius-sm); opacity: 0; transition: opacity 0.2s; pointer-events: none; z-index: 200; }
+  .toast.show { opacity: 1; }
+
+  /* Priority flag */
+  .flag { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; padding: 2px 7px; border-radius: 100px; }
+  .flag-1 { background: #fdf0e8; color: #b05a1a; }
+  .flag-2 { background: #f5ecfb; color: #5b3fa6; }
+
+  @media (max-width: 600px) {
+    .stats { grid-template-columns: repeat(2,1fr); }
+    .filters { flex-direction: column; align-items: flex-start; }
+    input[type=text] { width: 100%; }
+  }
+</style>
+</head>
+<body>
+<div class="shell">
+  <div class="header">
+    <div class="header-left">
+      <h1>BB Ops Dashboard</h1>
+      <p id="last-save">Rob Hichens · Director of Operations · Bright Beginnings Preschool</p>
+    </div>
+    <div class="header-right">
+      <button class="btn" onclick="exportData()">Export JSON</button>
+      <button class="btn btn-primary" onclick="openModal()">+ Add task</button>
+    </div>
+  </div>
+
+  <div class="stats">
+    <div class="stat s-crit"><div class="stat-num" id="s-crit">0</div><div class="stat-label">Critical</div></div>
+    <div class="stat s-prog"><div class="stat-num" id="s-prog">0</div><div class="stat-label">In progress</div></div>
+    <div class="stat s-mon"><div class="stat-num" id="s-mon">0</div><div class="stat-label">Monitoring</div></div>
+    <div class="stat s-done"><div class="stat-num" id="s-done">0</div><div class="stat-label">Done</div></div>
+  </div>
+
+  <div class="filters">
+    <label>Filter:</label>
+    <select id="f-status" onchange="render()">
+      <option value="">All statuses</option>
+      <option value="critical">Critical</option>
+      <option value="inprogress">In progress</option>
+      <option value="monitoring">Monitoring</option>
+      <option value="done">Done</option>
+    </select>
+    <select id="f-site" onchange="render()">
+      <option value="">All sites</option>
+      <option value="cr">Crozet</option>
+      <option value="mc">Mill Creek</option>
+      <option value="fl">Forest Lakes</option>
+      <option value="all">All sites</option>
+    </select>
+    <select id="f-cat" onchange="render()">
+      <option value="">All categories</option>
+    </select>
+    <input type="text" id="f-search" placeholder="Search..." oninput="render()">
+  </div>
+
+  <div id="task-list"></div>
+</div>
+
+<!-- Add Task Modal -->
+<div class="modal-overlay" id="modal">
+  <div class="modal">
+    <h3>Add task</h3>
+    <div class="field"><label>Title</label><input type="text" id="m-title" placeholder="Task name"></div>
+    <div class="field"><label>Category</label>
+      <select id="m-cat">
+        <option>Website & Digital</option>
+        <option>Marketing & Enrollment</option>
+        <option>Legal / Incident</option>
+        <option>Staffing / Leadership</option>
+        <option>Staffing / Ratios</option>
+        <option>Enrollment / Move-ups</option>
+        <option>Operations / Tech</option>
+        <option>Legal / HR</option>
+        <option>HR / Benefits</option>
+        <option>Training & Curriculum</option>
+        <option>Other</option>
+      </select>
+    </div>
+    <div class="field"><label>Site</label>
+      <select id="m-site">
+        <option value="all">All sites</option>
+        <option value="cr">Crozet</option>
+        <option value="mc">Mill Creek</option>
+        <option value="fl">Forest Lakes</option>
+      </select>
+    </div>
+    <div class="field"><label>Status</label>
+      <select id="m-status">
+        <option value="critical">Critical</option>
+        <option value="inprogress" selected>In progress</option>
+        <option value="monitoring">Monitoring</option>
+        <option value="done">Done</option>
+      </select>
+    </div>
+    <div class="field"><label>Priority flag (optional)</label>
+      <select id="m-priority">
+        <option value="">None</option>
+        <option value="1">Priority 1 — This week</option>
+        <option value="2">Priority 2 — Starting Monday</option>
+      </select>
+    </div>
+    <div class="field"><label>Notes</label><textarea id="m-notes" placeholder="Context, next steps, blockers..."></textarea></div>
+    <div class="field"><label>Dependencies</label><input type="text" id="m-deps" placeholder="e.g. Depends on Director hire"></div>
+    <div class="modal-actions">
+      <button class="btn" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="addTask()">Add task</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const STORAGE_KEY = 'bb_ops_tasks_v2';
+const SITES = { cr: 'Crozet', mc: 'Mill Creek', fl: 'Forest Lakes', all: 'All sites' };
+
+const DEFAULT_TASKS = [
+  // === PRIORITY 1: WEBSITE & INTELLIKID ===
+  { id: 1, title: 'Website audit — identify all broken links, outdated info, visual issues', status: 'critical', site: 'all', category: 'Website & Digital', priority: '1', notes: 'TODAY (Thu): Write everything down before touching anything. Cover: broken links, outdated info, missing sections, visual issues. Do this before any edits.', deps: 'Must complete before any Friday edits' },
+  { id: 2, title: 'Identify IntelliKid embed/link locations on site', status: 'critical', site: 'all', category: 'Website & Digital', priority: '1', notes: 'TODAY (Thu): Map exactly where IntelliKid needs to appear — enrollment form, tour scheduling, etc. Define embed method vs. link.', deps: 'Website audit (ID 1)' },
+  { id: 3, title: 'Execute all website edits from audit', status: 'inprogress', site: 'all', category: 'Website & Digital', priority: '1', notes: 'Friday: Apply all fixes identified in audit. Fix copy, images, links, navigation.', deps: 'Website audit complete (ID 1)' },
+  { id: 4, title: 'Embed / link IntelliKid CRM on relevant pages', status: 'inprogress', site: 'all', category: 'Website & Digital', priority: '1', notes: 'Friday: Embed on enrollment form page and tour scheduling. Test the connection end-to-end.', deps: 'IntelliKid location mapping (ID 2)' },
+  { id: 5, title: 'Full parent enrollment flow test (end-to-end)', status: 'inprogress', site: 'all', category: 'Website & Digital', priority: '1', notes: 'Friday: Walk through entire flow as if you are a new parent — find the site, fill out form, schedule tour. Note any friction.', deps: 'Website edits + IntelliKid embed done (IDs 3,4)' },
+  { id: 6, title: 'Soft test — send to Kathe/Molly for review', status: 'inprogress', site: 'all', category: 'Website & Digital', priority: '1', notes: 'Saturday: 1-2 trusted people click through and report anything missed.', deps: 'End-to-end test passed (ID 5)' },
+  { id: 7, title: 'Go live — begin sharing website', status: 'inprogress', site: 'all', category: 'Website & Digital', priority: '1', notes: 'Sunday: Final fixes applied, site live, begin promoting.', deps: 'Soft test sign-off (ID 6)' },
+  { id: 8, title: 'Summer Camp landing page', status: 'inprogress', site: 'all', category: 'Website & Digital', priority: '1', notes: 'Parents searching "summer camp charlottesville" need to find us. Build or update landing page with themes, dates, pricing, CTA.', deps: 'Website go-live (ID 7)' },
+
+  // === PRIORITY 2: SUMMER MARKETING & ENROLLMENT ===
+  { id: 9, title: 'Email blast — "Now Enrolling for Summer & Fall"', status: 'inprogress', site: 'all', category: 'Marketing & Enrollment', priority: '2', notes: 'Send to prospective + former families. Former families: filter rising K/1st/2nd for Summer Camp. Include tour link (IntelliKid). Target: send Monday.', deps: 'Website live (ID 7); IntelliKid linked (ID 4)' },
+  { id: 10, title: 'Social media content calendar — 5-7 posts', status: 'inprogress', site: 'all', category: 'Marketing & Enrollment', priority: '2', notes: 'Content: carousel post, testimonial, summer vibes/themes, "Now Enrolling" CTA, teacher spotlight. Schedule for the week. Ready to go Monday.', deps: '' },
+  { id: 11, title: 'CRM corporate outreach — filter by parent employer', status: 'inprogress', site: 'all', category: 'Marketing & Enrollment', priority: '2', notes: 'Filter CRM by where parents work. Send targeted corporate letters/emails. Good ROI channel.', deps: 'Email blast done (ID 9)' },
+  { id: 12, title: 'Physical marketing — yard signs & banners at all 3 sites', status: 'inprogress', site: 'all', category: 'Marketing & Enrollment', priority: '2', notes: '"Now Enrolling" signage at Crozet, Forest Lakes, Mill Creek. Check existing inventory first.', deps: '' },
+  { id: 13, title: 'Flyers — real estate offices, pools, elementary schools, community boards', status: 'inprogress', site: 'all', category: 'Marketing & Enrollment', priority: '2', notes: 'Physical distribution across Charlottesville area. Prioritize: elementary schools (K feeders), community pools, neighborhood boards.', deps: '' },
+  { id: 14, title: 'Schedule Open Houses at all 3 sites', status: 'inprogress', site: 'all', category: 'Marketing & Enrollment', priority: '2', notes: 'Monday format works well historically. Schedule for coming weeks and add to website + social.', deps: 'Website live (ID 7)' },
+  { id: 15, title: 'Referral campaign — current families', status: 'inprogress', site: 'all', category: 'Marketing & Enrollment', priority: '2', notes: 'Give flyers + incentive offer (e.g. "bring a friend — 2 weeks free tuition oldest child"). Ask in person and via Tadpoles.', deps: '' },
+  { id: 16, title: 'Call former families directly', status: 'inprogress', site: 'all', category: 'Marketing & Enrollment', priority: '2', notes: 'Personal outreach to families who left in last 2 years. High conversion rate. Prioritize families with kids entering summer camp age range.', deps: '' },
+  { id: 17, title: 'Hiring flyers — create and distribute', status: 'inprogress', site: 'all', category: 'Marketing & Enrollment', priority: '', notes: 'STARTED. Create hiring flyers for all 3 sites. Post to job boards, colleges (UVA, Sweet Briar, Mary Baldwin, JMU, Radford, Longwood), social media.', deps: '' },
+  { id: 18, title: 'Enrollment flyers — create and distribute', status: 'inprogress', site: 'all', category: 'Marketing & Enrollment', priority: '', notes: 'STARTED. Companion to hiring flyers. Outdoor brochure holders at all sites. Ask current families to take to their workplace.', deps: '' },
+
+  // === TRAINING & CURRICULUM ===
+  { id: 19, title: 'Teacher prep/training doc — monthly curriculum & lesson planning', status: 'inprogress', site: 'all', category: 'Training & Curriculum', priority: '', notes: 'Create structured guide for teachers on how to prepare curriculum and lesson plans for the following month. Standardize across all 3 sites.', deps: '' },
+
+  // === EXISTING CRITICAL / ONGOING ===
+  { id: 20, title: 'Crozet incident — law enforcement, CPS & licensing', status: 'critical', site: 'cr', category: 'Legal / Incident', priority: '', notes: 'Robin in non-child-facing role. Officer E. Ketchum (Albemarle Co. PD), CPS, and licensing inspector Michelle all engaged. Attorney reviewed — wait for parents to initiate. Do not reach out proactively.', deps: 'Attorney sign-off before any parent outreach' },
+  { id: 21, title: 'Monitor parent & social media — Crozet incident', status: 'monitoring', site: 'cr', category: 'Legal / Incident', priority: '', notes: 'Re-engage counsel if negative activity detected online or in parent community. Document everything.', deps: 'Crozet incident (ID 20)' },
+  { id: 22, title: 'Crozet Director — fill vacancy', status: 'critical', site: 'cr', category: 'Staffing / Leadership', priority: '', notes: 'Kathe + Alicia interim. Lillie (CR Monkeys lead) and Kimberly S (MC Giraffes) being considered. External hire may be needed. CRITICAL — 2 of 3 sites without permanent director.', deps: 'Staffing hole assessment; legal review of offer letter' },
+  { id: 23, title: 'Crozet Zebras — hire 2nd teacher', status: 'critical', site: 'cr', category: 'Staffing / Ratios', priority: '', notes: '14 children / 1 teacher. 3 over waiver cap of 11. Cannot resolve via move-ups.', deps: 'Crozet Director hire (ID 22)' },
+  { id: 24, title: 'Crozet Tigers → Cheetahs move-ups', status: 'inprogress', site: 'cr', category: 'Enrollment / Move-ups', priority: '', notes: '13 children / 1 teacher (Robin). 2 over cap. SIPE + Hamilton are oldest candidates. Cheetahs has 4 open spots.', deps: 'Robin situation resolved (ID 20)' },
+  { id: 25, title: 'Laura Baker transition to Mill Creek', status: 'monitoring', site: 'mc', category: 'Staffing / Leadership', priority: '', notes: 'Confirmed. Relocated from Forest Lakes effective Feb 23. Nancy (Training Coord.) supporting.', deps: '' },
+  { id: 26, title: 'Jess Rybak onboarding as FL Director', status: 'monitoring', site: 'fl', category: 'Staffing / Leadership', priority: '', notes: 'Promoted from Cheetahs lead. Sarah Mayers continuing as Zebras lead + AD support.', deps: 'Laura Baker MC transition (ID 25)' },
+  { id: 27, title: 'FL Zebras — fill teacher vacancy', status: 'critical', site: 'fl', category: 'Staffing / Ratios', priority: '', notes: 'Sarah vacated to AD role. 9 children need a teacher. No confirmed replacement.', deps: 'Jess Rybak stable (ID 26)' },
+  { id: 28, title: 'MC Elephants — fill teacher vacancy', status: 'critical', site: 'mc', category: 'Staffing / Ratios', priority: '', notes: 'Jessica moving to admin/front desk (planned March). 9 children need a replacement.', deps: 'Jessica transition timeline confirmed' },
+  { id: 29, title: 'MC Giraffes → Alligators move-ups', status: 'inprogress', site: 'mc', category: 'Enrollment / Move-ups', priority: '', notes: 'Priority 1 across all sites. Workman/Monteith/Brown are 17–18mo, past 15mo max. Must move Guan + 2 to Monkeys first to open Alligators spots.', deps: 'Alligators has 3 open spots; Guan + 2 moved to Monkeys first' },
+  { id: 30, title: 'HR system evaluation', status: 'inprogress', site: 'all', category: 'Operations / Tech', priority: '', notes: 'Phased: childcare platform first (Brightwheel, iCare, Playground), then general HR (BambooHR, GoCo) once leadership stable.', deps: 'Leadership stability across sites' },
+  { id: 31, title: 'OliLearn training app — next build phase', status: 'inprogress', site: 'all', category: 'Operations / Tech', priority: '', notes: 'olilearn.netlify.app live. Next: persistent backend, real staff in admin panel, more modules, custom domain (training.brightbeginnings.com). GitHub: robhichens/learning.', deps: 'Backend architecture decision; domain purchase' },
+  { id: 32, title: 'Staff contract legal review', status: 'inprogress', site: 'all', category: 'Legal / HR', priority: '', notes: 'Minimum wage reduction clause for resignations without notice likely violates VA Code §40.1-29(D). Attorney review pending.', deps: 'Attorney availability' },
+  { id: 33, title: 'Kim S childcare subsidy — 100% coverage request', status: 'inprogress', site: 'mc', category: 'HR / Benefits', priority: '', notes: 'MC Giraffes only teacher — cannot move her until replacement in place.', deps: 'Giraffes teacher backfill' },
+  { id: 34, title: 'Reagan childcare subsidy — 50% coverage request', status: 'inprogress', site: 'mc', category: 'HR / Benefits', priority: '', notes: 'Monkeys teacher. Evaluate and respond.', deps: '' },
+];
+
+// Load from localStorage or use defaults
+function loadTasks() {
+  try {
+    const stored = localStorage.getItem(STORAGE_KEY);
+    if (stored) return JSON.parse(stored);
+  } catch(e) {}
+  return JSON.parse(JSON.stringify(DEFAULT_TASKS));
+}
+
+function saveTasks() {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(tasks));
+    const now = new Date();
+    document.getElementById('last-save').textContent = 
+      `Rob Hichens · Last saved ${now.toLocaleDateString()} ${now.toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'})}`;
+  } catch(e) {}
+}
+
+let tasks = loadTasks();
+let nextId = Math.max(...tasks.map(t => t.id), 0) + 1;
+const expandedIds = {};
+
+function siteLabel(s) { return SITES[s] || s; }
+function siteBadge(s) { return `<span class="badge b-${s}">${siteLabel(s)}</span>`; }
+function statusBadge(s) {
+  const map = { critical: ['b-crit','Critical'], inprogress: ['b-prog','In progress'], monitoring: ['b-mon','Monitoring'], done: ['b-done','Done'] };
+  const [cls, lbl] = map[s] || ['b-all', s];
+  return `<span class="badge ${cls}">${lbl}</span>`;
+}
+function priorityFlag(p) {
+  if (!p) return '';
+  return `<span class="flag flag-${p}">P${p}</span>`;
+}
+
+function updateStats() {
+  const c = { critical: 0, inprogress: 0, monitoring: 0, done: 0 };
+  tasks.forEach(t => c[t.status] = (c[t.status]||0) + 1);
+  document.getElementById('s-crit').textContent = c.critical || 0;
+  document.getElementById('s-prog').textContent = c.inprogress || 0;
+  document.getElementById('s-mon').textContent = c.monitoring || 0;
+  document.getElementById('s-done').textContent = c.done || 0;
+}
+
+function updateCatFilter() {
+  const sel = document.getElementById('f-cat');
+  const cur = sel.value;
+  const cats = [...new Set(tasks.map(t => t.category))].sort();
+  sel.innerHTML = '<option value="">All categories</option>' + cats.map(c => `<option${cur===c?' selected':''}>${c}</option>`).join('');
+}
+
+function filtered() {
+  const fs = document.getElementById('f-status').value;
+  const fsi = document.getElementById('f-site').value;
+  const fcat = document.getElementById('f-cat').value;
+  const fq = document.getElementById('f-search').value.toLowerCase();
+  return tasks.filter(t => {
+    if (fs && t.status !== fs) return false;
+    if (fsi && t.site !== fsi) return false;
+    if (fcat && t.category !== fcat) return false;
+    if (fq && !(t.title.toLowerCase().includes(fq) || (t.notes||'').toLowerCase().includes(fq) || t.category.toLowerCase().includes(fq))) return false;
+    return true;
+  });
+}
+
+const CAT_ORDER = ['Website & Digital','Marketing & Enrollment','Legal / Incident','Staffing / Leadership','Staffing / Ratios','Enrollment / Move-ups','Operations / Tech','Legal / HR','HR / Benefits','Training & Curriculum'];
+const collapsedCats = new Set(JSON.parse(localStorage.getItem('bb_collapsed_cats') || '[]'));
+
+function toggleCat(cat) {
+  const key = 'cat-body-' + btoa(unescape(encodeURIComponent(cat)));
+  const hd = document.getElementById('cat-hd-' + key);
+  const body = document.getElementById(key);
+  if (!hd || !body) return;
+  if (collapsedCats.has(cat)) {
+    collapsedCats.delete(cat);
+    hd.classList.remove('collapsed');
+    body.classList.remove('hidden');
+  } else {
+    collapsedCats.add(cat);
+    hd.classList.add('collapsed');
+    body.classList.add('hidden');
+  }
+  localStorage.setItem('bb_collapsed_cats', JSON.stringify([...collapsedCats]));
+}
+
+function render() {
+  updateStats();
+  updateCatFilter();
+  const list = document.getElementById('task-list');
+  const ft = filtered();
+  if (!ft.length) { list.innerHTML = '<div class="empty">No tasks match this filter.</div>'; return; }
+  const groups = {};
+  ft.forEach(t => { if (!groups[t.category]) groups[t.category] = []; groups[t.category].push(t); });
+  const cats = CAT_ORDER.filter(c => groups[c]).concat(Object.keys(groups).filter(c => !CAT_ORDER.includes(c)));
+  let html = '';
+  cats.forEach(cat => {
+    const key = 'cat-body-' + btoa(unescape(encodeURIComponent(cat)));
+    const isCollapsed = collapsedCats.has(cat);
+    const count = groups[cat].length;
+    html += `<div class="section-wrap">
+      <div class="section-hd${isCollapsed ? ' collapsed' : ''}" id="cat-hd-${key}" onclick="toggleCat(${JSON.stringify(cat)})">
+        <div class="section-hd-left">
+          <span>${cat}</span>
+          <span class="section-count">${count}</span>
+        </div>
+        <svg class="section-chevron" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M5 8l5 5 5-5"/></svg>
+      </div>
+      <div class="section-body${isCollapsed ? ' hidden' : ''}" id="${key}">`;
+    groups[cat].forEach(t => {
+      html += `
+      <div class="task-card${expandedIds[t.id] ? ' expanded' : ''}" id="tc-${t.id}">
+        <div class="task-top" onclick="toggle(${t.id})">
+          <div class="task-priority p-${t.status}"></div>
+          <div class="task-main">
+            <div class="task-title-row">
+              ${t.priority ? priorityFlag(t.priority) : ''}
+              <span class="task-name">${t.title}</span>
+            </div>
+            <div class="task-meta">${statusBadge(t.status)} ${siteBadge(t.site)}</div>
+          </div>
+          <svg class="chevron" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M5 8l5 5 5-5"/></svg>
+        </div>
+        <div class="task-detail">
+          <div class="detail-grid">
+            <div class="det-row">
+              <span class="det-label">Notes</span>
+              <div style="flex:1">
+                <textarea class="note-area" id="note-${t.id}" onclick="event.stopPropagation()">${t.notes||''}</textarea>
+                <div class="note-actions">
+                  <button class="save-note" onclick="event.stopPropagation();saveNote(${t.id})">Save note</button>
+                </div>
+              </div>
+            </div>
+            ${t.deps ? `<div class="det-row"><span class="det-label">Dependencies</span><span class="det-val dep-text">${t.deps}</span></div>` : ''}
+            <div class="det-row">
+              <span class="det-label">Status</span>
+              <div class="status-btns">
+                <button class="sb${t.status==='critical'?' active-critical':''}" onclick="event.stopPropagation();setStatus(${t.id},'critical')">Critical</button>
+                <button class="sb${t.status==='inprogress'?' active-inprogress':''}" onclick="event.stopPropagation();setStatus(${t.id},'inprogress')">In progress</button>
+                <button class="sb${t.status==='monitoring'?' active-monitoring':''}" onclick="event.stopPropagation();setStatus(${t.id},'monitoring')">Monitoring</button>
+                <button class="sb${t.status==='done'?' active-done':''}" onclick="event.stopPropagation();setStatus(${t.id},'done')">Done</button>
+              </div>
+            </div>
+            <div class="det-row">
+              <span class="det-label"></span>
+              <button class="del-btn" onclick="event.stopPropagation();deleteTask(${t.id})">Delete task</button>
+            </div>
+          </div>
+        </div>
+      </div>`;
+    });
+    html += `</div></div>`;
+  });
+  list.innerHTML = html;
+}
+
+function toggle(id) {
+  expandedIds[id] = !expandedIds[id];
+  const el = document.getElementById('tc-' + id);
+  if (el) el.classList.toggle('expanded', expandedIds[id]);
+}
+
+function saveNote(id) {
+  const t = tasks.find(x => x.id === id); if (!t) return;
+  t.notes = document.getElementById('note-' + id).value;
+  saveTasks();
+  showToast('Note saved');
+}
+
+function setStatus(id, status) {
+  const t = tasks.find(x => x.id === id); if (!t) return;
+  t.status = status;
+  saveTasks();
+  const was = expandedIds[id];
+  render();
+  if (was) { expandedIds[id] = true; const el = document.getElementById('tc-' + id); if (el) el.classList.add('expanded'); }
+}
+
+function deleteTask(id) {
+  if (!confirm('Delete this task?')) return;
+  tasks = tasks.filter(x => x.id !== id);
+  delete expandedIds[id];
+  saveTasks();
+  render();
+  showToast('Task deleted');
+}
+
+function openModal() { document.getElementById('modal').classList.add('open'); document.getElementById('m-title').focus(); }
+function closeModal() { document.getElementById('modal').classList.remove('open'); }
+
+function addTask() {
+  const title = document.getElementById('m-title').value.trim();
+  if (!title) { alert('Please enter a task title.'); return; }
+  tasks.unshift({
+    id: nextId++,
+    title,
+    status: document.getElementById('m-status').value,
+    site: document.getElementById('m-site').value,
+    category: document.getElementById('m-cat').value,
+    priority: document.getElementById('m-priority').value,
+    notes: document.getElementById('m-notes').value,
+    deps: document.getElementById('m-deps').value
+  });
+  saveTasks();
+  closeModal();
+  document.getElementById('m-title').value = '';
+  document.getElementById('m-notes').value = '';
+  document.getElementById('m-deps').value = '';
+  render();
+  showToast('Task added');
+}
+
+function exportData() {
+  const blob = new Blob([JSON.stringify(tasks, null, 2)], { type: 'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'bb_ops_tasks_' + new Date().toISOString().slice(0,10) + '.json';
+  a.click();
+}
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2000);
+}
+
+// Close modal on overlay click
+document.getElementById('modal').addEventListener('click', e => { if (e.target === document.getElementById('modal')) closeModal(); });
+
+// Enter key in title field
+document.getElementById('m-title').addEventListener('keydown', e => { if (e.key === 'Enter') addTask(); });
+
+render();
+</script>
+</body>
+</html>
