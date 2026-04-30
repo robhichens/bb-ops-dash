@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>BB Ops Dashboard — Rob Hichens</title>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<div class="shell">
+
+  <!-- Header -->
+  <div class="header">
+    <div class="header-left">
+      <h1>BB Ops Dashboard</h1>
+      <p id="last-save">Rob Hichens · Director of Operations · Bright Beginnings Preschool</p>
+    </div>
+    <div class="header-right">
+      <button class="btn" id="btn-export">Export JSON</button>
+      <button class="btn btn-primary" id="btn-add">+ Add task</button>
+    </div>
+  </div>
+
+  <!-- Stats -->
+  <div class="stats">
+    <div class="stat s-crit"><div class="stat-num" id="s-crit">—</div><div class="stat-label">Critical</div></div>
+    <div class="stat s-prog"><div class="stat-num" id="s-prog">—</div><div class="stat-label">In progress</div></div>
+    <div class="stat s-mon" ><div class="stat-num" id="s-mon" >—</div><div class="stat-label">Monitoring</div></div>
+    <div class="stat s-done"><div class="stat-num" id="s-done">—</div><div class="stat-label">Done</div></div>
+  </div>
+
+  <!-- Filters -->
+  <div class="filters">
+    <label>Filter:</label>
+    <select id="f-status">
+      <option value="">All statuses</option>
+      <option value="critical">Critical</option>
+      <option value="inprogress">In progress</option>
+      <option value="monitoring">Monitoring</option>
+      <option value="done">Done</option>
+    </select>
+    <select id="f-site">
+      <option value="">All sites</option>
+      <option value="cr">Crozet</option>
+      <option value="mc">Mill Creek</option>
+      <option value="fl">Forest Lakes</option>
+      <option value="all">All sites</option>
+    </select>
+    <select id="f-cat">
+      <option value="">All categories</option>
+    </select>
+    <input type="text" id="f-search" placeholder="Search...">
+  </div>
+
+  <!-- Task list -->
+  <div id="task-list">
+    <div class="empty">Connecting to database…</div>
+  </div>
+
+</div>
+
+<!-- Add Task Modal -->
+<div class="modal-overlay" id="modal">
+  <div class="modal">
+    <h3>Add task</h3>
+    <div class="field">
+      <label>Title</label>
+      <input type="text" id="m-title" placeholder="Task name">
+    </div>
+    <div class="field">
+      <label>Category</label>
+      <select id="m-cat">
+        <option>Website & Digital</option>
+        <option>Marketing & Enrollment</option>
+        <option>Legal / Incident</option>
+        <option>Staffing / Leadership</option>
+        <option>Staffing / Ratios</option>
+        <option>Enrollment / Move-ups</option>
+        <option>Operations / Tech</option>
+        <option>Legal / HR</option>
+        <option>HR / Benefits</option>
+        <option>Training & Curriculum</option>
+        <option>Other</option>
+      </select>
+    </div>
+    <div class="field">
+      <label>Site</label>
+      <select id="m-site">
+        <option value="all">All sites</option>
+        <option value="cr">Crozet</option>
+        <option value="mc">Mill Creek</option>
+        <option value="fl">Forest Lakes</option>
+      </select>
+    </div>
+    <div class="field">
+      <label>Status</label>
+      <select id="m-status">
+        <option value="critical">Critical</option>
+        <option value="inprogress" selected>In progress</option>
+        <option value="monitoring">Monitoring</option>
+        <option value="done">Done</option>
+      </select>
+    </div>
+    <div class="field">
+      <label>Priority flag (optional)</label>
+      <select id="m-priority">
+        <option value="">None</option>
+        <option value="1">Priority 1 — This week</option>
+        <option value="2">Priority 2 — Starting Monday</option>
+      </select>
+    </div>
+    <div class="field">
+      <label>Notes</label>
+      <textarea id="m-notes" placeholder="Context, next steps, blockers…"></textarea>
+    </div>
+    <div class="field">
+      <label>Dependencies</label>
+      <input type="text" id="m-deps" placeholder="e.g. Depends on Director hire">
+    </div>
+    <div class="modal-actions">
+      <button class="btn" id="btn-cancel">Cancel</button>
+      <button class="btn btn-primary" id="btn-confirm-add">Add task</button>
+    </div>
+  </div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<!-- App — ES module -->
+<script type="module">
+  import { init, openModal, closeModal, addTask, exportData } from "./js/app.js";
+
+  document.getElementById("btn-add").addEventListener("click", openModal);
+  document.getElementById("btn-cancel").addEventListener("click", closeModal);
+  document.getElementById("btn-confirm-add").addEventListener("click", addTask);
+  document.getElementById("btn-export").addEventListener("click", exportData);
+
+  init();
+</script>
+</body>
+</html>
