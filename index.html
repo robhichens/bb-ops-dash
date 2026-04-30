@@ -18,13 +18,13 @@
     </div>
     <div class="header-right">
       <button class="btn" id="btn-digest">Weekly digest</button>
-      <button class="btn" id="btn-export">Export JSON</button>
       <button class="btn btn-primary" id="btn-add">+ Add task</button>
     </div>
   </div>
 
   <!-- Stats -->
   <div class="stats">
+    <div class="stat s-new" ><div class="stat-num" id="s-new" >—</div><div class="stat-label">New</div></div>
     <div class="stat s-crit"><div class="stat-num" id="s-crit">—</div><div class="stat-label">Critical</div></div>
     <div class="stat s-prog"><div class="stat-num" id="s-prog">—</div><div class="stat-label">In progress</div></div>
     <div class="stat s-mon" ><div class="stat-num" id="s-mon" >—</div><div class="stat-label">Monitoring</div></div>
@@ -36,6 +36,7 @@
     <label>Filter:</label>
     <select id="f-status">
       <option value="">All statuses</option>
+      <option value="new">New</option>
       <option value="critical">Critical</option>
       <option value="inprogress">In progress</option>
       <option value="monitoring">Monitoring</option>
@@ -97,8 +98,9 @@
     <div class="field">
       <label>Status</label>
       <select id="m-status">
+        <option value="new" selected>New</option>
         <option value="critical">Critical</option>
-        <option value="inprogress" selected>In progress</option>
+        <option value="inprogress">In progress</option>
         <option value="monitoring">Monitoring</option>
         <option value="done">Done</option>
       </select>
@@ -146,12 +148,11 @@
 
 <!-- App — ES module -->
 <script type="module">
-  import { init, openModal, closeModal, addTask, exportData, showDigest, closeDigest } from "./js/app.js";
+  import { init, openModal, closeModal, addTask, showDigest, closeDigest } from "./js/app.js";
 
   document.getElementById("btn-add").addEventListener("click", openModal);
   document.getElementById("btn-cancel").addEventListener("click", closeModal);
   document.getElementById("btn-confirm-add").addEventListener("click", addTask);
-  document.getElementById("btn-export").addEventListener("click", exportData);
   document.getElementById("btn-digest").addEventListener("click", showDigest);
   document.getElementById("btn-close-digest").addEventListener("click", closeDigest);
 
