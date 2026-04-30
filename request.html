@@ -1,0 +1,433 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Work Request — Bright Beginnings</title>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #f5f3ef;
+      --surface: #ffffff;
+      --surface2: #f0ede8;
+      --border: #e2ddd6;
+      --border2: #ccc8c0;
+      --text: #1a1816;
+      --text2: #6b6560;
+      --text3: #9b958f;
+      --accent: #2d5a3d;
+      --accent-light: #e8f0eb;
+      --red: #c0392b;
+      --red-bg: #fdf0ee;
+      --green: #2d5a3d;
+      --green-bg: #e8f0eb;
+      --radius: 10px;
+      --radius-sm: 6px;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'DM Sans', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      font-size: 14px;
+      min-height: 100vh;
+      padding: 40px 20px 60px;
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+    }
+
+    .card {
+      width: 100%;
+      max-width: 560px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 32px 28px;
+      box-shadow: 0 2px 12px rgba(0, 0, 0, 0.04);
+    }
+
+    .brand {
+      font-size: 11px;
+      color: var(--text2);
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      font-family: 'DM Mono', monospace;
+      margin-bottom: 8px;
+    }
+    h1 {
+      font-size: 22px;
+      font-weight: 600;
+      letter-spacing: -0.3px;
+      margin-bottom: 6px;
+    }
+    .lede {
+      font-size: 13px;
+      color: var(--text2);
+      margin-bottom: 24px;
+      line-height: 1.5;
+    }
+
+    .field { margin-bottom: 14px; }
+    .field label {
+      display: block;
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--text2);
+      margin-bottom: 4px;
+      font-family: 'DM Mono', monospace;
+    }
+    .field input,
+    .field select,
+    .field textarea {
+      width: 100%;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 13px;
+      padding: 8px 10px;
+      border: 1px solid var(--border2);
+      border-radius: var(--radius-sm);
+      background: var(--bg);
+      color: var(--text);
+      outline: none;
+    }
+    .field input:focus,
+    .field select:focus,
+    .field textarea:focus {
+      border-color: var(--accent);
+      background: var(--surface);
+    }
+    .field textarea {
+      resize: vertical;
+      min-height: 100px;
+      line-height: 1.5;
+    }
+
+    .actions {
+      display: flex;
+      gap: 8px;
+      justify-content: flex-end;
+      margin-top: 18px;
+    }
+    .btn {
+      font-family: 'DM Sans', sans-serif;
+      font-size: 13px;
+      font-weight: 500;
+      padding: 9px 18px;
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--border2);
+      background: var(--surface);
+      color: var(--text);
+      cursor: pointer;
+      transition: background 0.12s;
+    }
+    .btn:hover { background: var(--surface2); }
+    .btn-primary {
+      background: var(--accent);
+      color: #fff;
+      border-color: transparent;
+    }
+    .btn-primary:hover { background: #234a31; }
+    .btn-primary:disabled {
+      background: var(--text3);
+      cursor: not-allowed;
+    }
+
+    .error {
+      font-size: 12px;
+      color: var(--red);
+      background: var(--red-bg);
+      padding: 8px 12px;
+      border-radius: var(--radius-sm);
+      margin-top: 12px;
+      display: none;
+    }
+    .error.show { display: block; }
+
+    .confirmation {
+      text-align: center;
+      padding: 24px 8px 8px;
+    }
+    .confirmation-icon {
+      width: 56px;
+      height: 56px;
+      border-radius: 50%;
+      background: var(--green-bg);
+      color: var(--green);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 28px;
+      margin-bottom: 16px;
+    }
+    .confirmation h2 {
+      font-size: 18px;
+      font-weight: 600;
+      margin-bottom: 8px;
+    }
+    .confirmation p {
+      font-size: 13px;
+      color: var(--text2);
+      line-height: 1.5;
+      margin-bottom: 20px;
+    }
+
+    .footer-note {
+      text-align: center;
+      font-size: 11px;
+      color: var(--text3);
+      font-family: 'DM Mono', monospace;
+      margin-top: 24px;
+    }
+
+    .login-card {
+      text-align: center;
+    }
+    .login-card .field { text-align: left; }
+    .login-card .actions { justify-content: center; margin-top: 8px; }
+    .login-card .btn-primary { width: 100%; padding: 10px 18px; }
+  </style>
+</head>
+<body>
+
+<!-- Login screen -->
+<div class="card login-card" id="login-view">
+  <div class="brand">Bright Beginnings</div>
+  <h1>Work Request Portal</h1>
+  <p class="lede">Enter the access password to continue.</p>
+
+  <div class="field">
+    <label for="login-password">Password</label>
+    <input type="password" id="login-password" autocomplete="current-password" autofocus>
+  </div>
+
+  <div class="error" id="login-error">Incorrect password. Please try again.</div>
+
+  <div class="actions">
+    <button class="btn btn-primary" id="login-btn">Enter</button>
+  </div>
+</div>
+
+<!-- Request form -->
+<div class="card" id="form-view" style="display:none">
+  <div class="brand">Bright Beginnings</div>
+  <h1>Submit a Work Request</h1>
+  <p class="lede">Submit a request to the operations team. We'll be in touch shortly.</p>
+
+  <form id="request-form" novalidate>
+    <div class="field">
+      <label for="r-name">Your name *</label>
+      <input type="text" id="r-name" required>
+    </div>
+
+    <div class="field">
+      <label for="r-email">Your email *</label>
+      <input type="email" id="r-email" required>
+    </div>
+
+    <div class="field">
+      <label for="r-site">Site</label>
+      <select id="r-site">
+        <option value="cr">Crozet</option>
+        <option value="mc">Mill Creek</option>
+        <option value="fl">Forest Lakes</option>
+        <option value="all" selected>General</option>
+      </select>
+    </div>
+
+    <div class="field">
+      <label for="r-type">Request type</label>
+      <select id="r-type">
+        <option>Facilities & Maintenance</option>
+        <option>Staff Request</option>
+        <option>Enrollment Question</option>
+        <option>Parent Communication</option>
+        <option>Supply Request</option>
+        <option>IT & Tech</option>
+        <option>Other</option>
+      </select>
+    </div>
+
+    <div class="field">
+      <label for="r-title">Subject / title *</label>
+      <input type="text" id="r-title" required>
+    </div>
+
+    <div class="field">
+      <label for="r-desc">Description / details *</label>
+      <textarea id="r-desc" required></textarea>
+    </div>
+
+    <div class="field">
+      <label for="r-urgency">Urgency</label>
+      <select id="r-urgency">
+        <option value="Routine" selected>Routine</option>
+        <option value="Urgent">Urgent</option>
+        <option value="Critical">Critical</option>
+      </select>
+    </div>
+
+    <div class="error" id="form-error"></div>
+
+    <div class="actions">
+      <button type="submit" class="btn btn-primary" id="submit-btn">Submit request</button>
+    </div>
+  </form>
+
+  <div class="footer-note">Bright Beginnings Operations</div>
+</div>
+
+<!-- Confirmation -->
+<div class="card" id="confirm-view" style="display:none">
+  <div class="confirmation">
+    <div class="confirmation-icon">&#10003;</div>
+    <h2>Request received</h2>
+    <p>Thank you. Your request has been submitted to the operations team. You'll hear from us shortly.</p>
+    <button class="btn btn-primary" id="confirm-btn">Submit another request</button>
+  </div>
+</div>
+
+<script type="module">
+  import { db } from "./js/firebase.js";
+  import {
+    doc,
+    setDoc,
+    Timestamp,
+  } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+  const ACCESS_PASSWORD = "brightbeginnings2025";
+  const SESSION_KEY = "bb_request_authed";
+  const TASKS_COLLECTION = "tasks";
+
+  const loginView = document.getElementById("login-view");
+  const formView = document.getElementById("form-view");
+  const confirmView = document.getElementById("confirm-view");
+
+  // ── Auth ────────────────────────────────────────────────────
+  function showForm() {
+    loginView.style.display = "none";
+    confirmView.style.display = "none";
+    formView.style.display = "block";
+  }
+
+  function showLogin() {
+    formView.style.display = "none";
+    confirmView.style.display = "none";
+    loginView.style.display = "block";
+    document.getElementById("login-password").focus();
+  }
+
+  function showConfirmation() {
+    loginView.style.display = "none";
+    formView.style.display = "none";
+    confirmView.style.display = "block";
+  }
+
+  if (sessionStorage.getItem(SESSION_KEY) === "1") {
+    showForm();
+  } else {
+    showLogin();
+  }
+
+  const loginInput = document.getElementById("login-password");
+  const loginErr = document.getElementById("login-error");
+
+  function attemptLogin() {
+    const val = loginInput.value;
+    if (val === ACCESS_PASSWORD) {
+      sessionStorage.setItem(SESSION_KEY, "1");
+      loginInput.value = "";
+      loginErr.classList.remove("show");
+      showForm();
+    } else {
+      loginErr.classList.add("show");
+      loginInput.select();
+    }
+  }
+
+  document.getElementById("login-btn").addEventListener("click", attemptLogin);
+  loginInput.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      attemptLogin();
+    }
+    if (loginErr.classList.contains("show")) loginErr.classList.remove("show");
+  });
+
+  // ── Form submit ─────────────────────────────────────────────
+  const form = document.getElementById("request-form");
+  const submitBtn = document.getElementById("submit-btn");
+  const formErr = document.getElementById("form-error");
+
+  function genId() {
+    return "req_" + Date.now().toString(36) + "_" + Math.random().toString(36).slice(2, 8);
+  }
+
+  function resetForm() {
+    form.reset();
+    formErr.classList.remove("show");
+    submitBtn.disabled = false;
+    submitBtn.textContent = "Submit request";
+  }
+
+  form.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    formErr.classList.remove("show");
+
+    const name = document.getElementById("r-name").value.trim();
+    const email = document.getElementById("r-email").value.trim();
+    const site = document.getElementById("r-site").value;
+    const reqType = document.getElementById("r-type").value;
+    const title = document.getElementById("r-title").value.trim();
+    const desc = document.getElementById("r-desc").value.trim();
+    const urgency = document.getElementById("r-urgency").value;
+
+    if (!name || !email || !title || !desc) {
+      formErr.textContent = "Please fill in all required fields.";
+      formErr.classList.add("show");
+      return;
+    }
+
+    submitBtn.disabled = true;
+    submitBtn.textContent = "Submitting…";
+
+    const notes =
+      `Submitted by: ${name} <${email}>\n` +
+      `Urgency: ${urgency}\n\n` +
+      desc;
+
+    const id = genId();
+    const task = {
+      id,
+      title,
+      status: "new",
+      site,
+      category: reqType,
+      priority: "",
+      notes,
+      deps: "",
+      dueDate: "",
+      updatedAt: Timestamp.now(),
+    };
+
+    try {
+      await setDoc(doc(db, TASKS_COLLECTION, id), task);
+      showConfirmation();
+    } catch (err) {
+      console.error(err);
+      formErr.textContent = "Something went wrong. Please try again.";
+      formErr.classList.add("show");
+      submitBtn.disabled = false;
+      submitBtn.textContent = "Submit request";
+    }
+  });
+
+  document.getElementById("confirm-btn").addEventListener("click", () => {
+    resetForm();
+    showForm();
+  });
+</script>
+
+</body>
+</html>
