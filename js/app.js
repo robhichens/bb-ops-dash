@@ -24,7 +24,7 @@ const CAT_ORDER = [
   "Website & Digital", "Marketing & Enrollment", "Legal / Incident",
   "Training and Professional Development", "Hiring & Onboarding", "Enrollment / Move-ups",
   "Operations / Tech", "Legal / HR", "HR / Benefits", "Playground Projects",
-  "Classroom Projects", "Events and Community",
+  "Classroom Projects", "Events and Community", "Other",
 ];
 const DONE_KEY = "__done__";
 

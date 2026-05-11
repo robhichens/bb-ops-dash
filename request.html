@@ -394,8 +394,21 @@
     submitBtn.disabled = true;
     submitBtn.textContent = "Submitting…";
 
+    const CATEGORY_MAP = {
+      "Facilities & Maintenance": "Operations / Tech",
+      "Staff Request": "Hiring & Onboarding",
+      "Enrollment Question": "Marketing & Enrollment",
+      "Parent Communication": "Marketing & Enrollment",
+      "Supply Request": "Operations / Tech",
+      "IT & Tech": "Operations / Tech",
+      "Other": "Other",
+    };
+
+    const category = CATEGORY_MAP[reqType] || "Other";
+
     const notes =
       `Submitted by: ${name} <${email}>\n` +
+      `Request type: ${reqType}\n` +
       `Urgency: ${urgency}\n\n` +
       desc;
 
@@ -406,7 +419,7 @@
       const snap = await getDocs(collection(db, TASKS_COLLECTION));
       const peers = snap.docs
         .map((d) => d.data())
-        .filter((t) => t.category === reqType && t.status !== "done");
+        .filter((t) => t.category === category && t.status !== "done");
       const minOrder = peers.reduce(
         (m, t) => Math.min(m, typeof t.order === "number" ? t.order : 1e9),
         Infinity
@@ -419,7 +432,7 @@
       title,
       status: "new",
       site,
-      category: reqType,
+      category,
       priority: "",
       notes,
       deps: "",
