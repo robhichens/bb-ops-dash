@@ -291,7 +291,9 @@
 <script type="module">
   import { db } from "./js/firebase.js";
   import {
+    collection,
     doc,
+    getDocs,
     setDoc,
     Timestamp,
   } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
@@ -392,22 +394,50 @@
     submitBtn.disabled = true;
     submitBtn.textContent = "Submitting…";
 
+    const CATEGORY_MAP = {
+      "Facilities & Maintenance": "Operations / Tech",
+      "Staff Request": "Hiring & Onboarding",
+      "Enrollment Question": "Marketing & Enrollment",
+      "Parent Communication": "Marketing & Enrollment",
+      "Supply Request": "Operations / Tech",
+      "IT & Tech": "Operations / Tech",
+      "Other": "Other",
+    };
+
+    const category = CATEGORY_MAP[reqType] || "Other";
+
     const notes =
       `Submitted by: ${name} <${email}>\n` +
+      `Request type: ${reqType}\n` +
       `Urgency: ${urgency}\n\n` +
       desc;
 
     const id = genId();
+
+    let order = 0;
+    try {
+      const snap = await getDocs(collection(db, TASKS_COLLECTION));
+      const peers = snap.docs
+        .map((d) => d.data())
+        .filter((t) => t.category === category && t.status !== "done");
+      const minOrder = peers.reduce(
+        (m, t) => Math.min(m, typeof t.order === "number" ? t.order : 1e9),
+        Infinity
+      );
+      order = minOrder === Infinity ? 0 : minOrder - 1;
+    } catch (_) { /* fallback to 0 */ }
+
     const task = {
       id,
       title,
       status: "new",
       site,
-      category: reqType,
+      category,
       priority: "",
       notes,
       deps: "",
       dueDate: "",
+      order,
       updatedAt: Timestamp.now(),
     };
 

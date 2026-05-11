@@ -76,13 +76,15 @@
         <option>Website & Digital</option>
         <option>Marketing & Enrollment</option>
         <option>Legal / Incident</option>
-        <option>Staffing / Leadership</option>
-        <option>Staffing / Ratios</option>
+        <option>Training and Professional Development</option>
+        <option>Hiring & Onboarding</option>
         <option>Enrollment / Move-ups</option>
         <option>Operations / Tech</option>
         <option>Legal / HR</option>
         <option>HR / Benefits</option>
-        <option>Training & Curriculum</option>
+        <option>Playground Projects</option>
+        <option>Classroom Projects</option>
+        <option>Events and Community</option>
         <option>Other</option>
       </select>
     </div>
@@ -146,9 +148,30 @@
 <!-- Toast -->
 <div class="toast" id="toast"></div>
 
+<!-- Voice Agent Panel -->
+<div class="voice-panel" id="voice-panel">
+  <div class="voice-panel-header">
+    <span class="voice-panel-title">Voice task assistant</span>
+    <button class="voice-close-btn" id="voice-close-btn">&times;</button>
+  </div>
+  <div class="voice-chat-body" id="voice-chat-body"></div>
+  <div class="voice-input-area">
+    <input type="text" class="voice-text-input" id="voice-text-input" placeholder="Type a task or reply...">
+    <button class="voice-send-btn" id="voice-send-btn" title="Send">
+      <svg viewBox="0 0 20 20"><path d="M2.94 17.06a1 1 0 0 1-.36-1.2L5.5 10 2.58 4.14a1 1 0 0 1 1.36-1.32l14 7a1 1 0 0 1 0 1.78l-14 7a1 1 0 0 1-1-.54z"/></svg>
+    </button>
+  </div>
+</div>
+
+<!-- Voice Agent Mic Button -->
+<button class="voice-mic-btn" id="voice-mic-btn" title="Voice task assistant">
+  <svg viewBox="0 0 24 24"><path d="M12 14a3 3 0 0 0 3-3V5a3 3 0 1 0-6 0v6a3 3 0 0 0 3 3zm5-3a5 5 0 0 1-10 0H5a7 7 0 0 0 6 6.92V21h2v-3.08A7 7 0 0 0 19 11h-2z"/></svg>
+</button>
+
 <!-- App — ES module -->
 <script type="module">
   import { init, openModal, closeModal, addTask, showDigest, closeDigest } from "./js/app.js";
+  import { initVoiceAgent } from "./js/voice-agent.js";
 
   document.getElementById("btn-add").addEventListener("click", openModal);
   document.getElementById("btn-cancel").addEventListener("click", closeModal);
@@ -157,6 +180,7 @@
   document.getElementById("btn-close-digest").addEventListener("click", closeDigest);
 
   init();
+  initVoiceAgent();
 </script>
 </body>
 </html>
