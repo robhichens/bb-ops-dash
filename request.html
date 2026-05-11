@@ -291,7 +291,9 @@
 <script type="module">
   import { db } from "./js/firebase.js";
   import {
+    collection,
     doc,
+    getDocs,
     setDoc,
     Timestamp,
   } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
@@ -398,6 +400,20 @@
       desc;
 
     const id = genId();
+
+    let order = 0;
+    try {
+      const snap = await getDocs(collection(db, TASKS_COLLECTION));
+      const peers = snap.docs
+        .map((d) => d.data())
+        .filter((t) => t.category === reqType && t.status !== "done");
+      const minOrder = peers.reduce(
+        (m, t) => Math.min(m, typeof t.order === "number" ? t.order : 1e9),
+        Infinity
+      );
+      order = minOrder === Infinity ? 0 : minOrder - 1;
+    } catch (_) { /* fallback to 0 */ }
+
     const task = {
       id,
       title,
@@ -408,6 +424,7 @@
       notes,
       deps: "",
       dueDate: "",
+      order,
       updatedAt: Timestamp.now(),
     };
 

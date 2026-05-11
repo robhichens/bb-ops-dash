@@ -22,8 +22,9 @@ const TASKS_COLLECTION = "tasks";
 const SITES = { cr: "Crozet", mc: "Mill Creek", fl: "Forest Lakes", all: "All sites" };
 const CAT_ORDER = [
   "Website & Digital", "Marketing & Enrollment", "Legal / Incident",
-  "Staffing / Leadership", "Staffing / Ratios", "Enrollment / Move-ups",
-  "Operations / Tech", "Legal / HR", "HR / Benefits", "Training & Curriculum",
+  "Training and Professional Development", "Hiring & Onboarding", "Enrollment / Move-ups",
+  "Operations / Tech", "Legal / HR", "HR / Benefits", "Playground Projects",
+  "Classroom Projects", "Events and Community",
 ];
 const DONE_KEY = "__done__";
 

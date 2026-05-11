@@ -26,22 +26,22 @@ export const DEFAULT_TASKS = [
   { id: "17", title: "Hiring flyers — create and distribute", status: "inprogress", site: "all", category: "Marketing & Enrollment", priority: "", notes: "STARTED. Create hiring flyers for all 3 sites. Post to job boards, colleges (UVA, Sweet Briar, Mary Baldwin, JMU, Radford, Longwood), social media.", deps: "" },
   { id: "18", title: "Enrollment flyers — create and distribute", status: "inprogress", site: "all", category: "Marketing & Enrollment", priority: "", notes: "STARTED. Companion to hiring flyers. Outdoor brochure holders at all sites. Ask current families to take to their workplace.", deps: "" },
 
-  // === TRAINING & CURRICULUM ===
-  { id: "19", title: "Teacher prep/training doc — monthly curriculum & lesson planning", status: "inprogress", site: "all", category: "Training & Curriculum", priority: "", notes: "Create structured guide for teachers on how to prepare curriculum and lesson plans for the following month. Standardize across all 3 sites.", deps: "" },
+  // === PLAYGROUND PROJECTS ===
+  { id: "19", title: "Teacher prep/training doc — monthly curriculum & lesson planning", status: "inprogress", site: "all", category: "Playground Projects", priority: "", notes: "Create structured guide for teachers on how to prepare curriculum and lesson plans for the following month. Standardize across all 3 sites.", deps: "" },
 
   // === LEGAL / INCIDENT ===
   { id: "20", title: "Crozet incident — law enforcement, CPS & licensing", status: "critical", site: "cr", category: "Legal / Incident", priority: "", notes: "Robin in non-child-facing role. Officer E. Ketchum (Albemarle Co. PD), CPS, and licensing inspector Michelle all engaged. Attorney reviewed — wait for parents to initiate. Do not reach out proactively.", deps: "Attorney sign-off before any parent outreach" },
   { id: "21", title: "Monitor parent & social media — Crozet incident", status: "monitoring", site: "cr", category: "Legal / Incident", priority: "", notes: "Re-engage counsel if negative activity detected online or in parent community. Document everything.", deps: "Crozet incident (ID 20)" },
 
-  // === STAFFING / LEADERSHIP ===
-  { id: "22", title: "Crozet Director — fill vacancy", status: "critical", site: "cr", category: "Staffing / Leadership", priority: "", notes: "Kathe + Alicia interim. Lillie (CR Monkeys lead) and Kimberly S (MC Giraffes) being considered. External hire may be needed. CRITICAL — 2 of 3 sites without permanent director.", deps: "Staffing hole assessment; legal review of offer letter" },
-  { id: "25", title: "Laura Baker transition to Mill Creek", status: "monitoring", site: "mc", category: "Staffing / Leadership", priority: "", notes: "Confirmed. Relocated from Forest Lakes effective Feb 23. Nancy (Training Coord.) supporting.", deps: "" },
-  { id: "26", title: "Jess Rybak onboarding as FL Director", status: "monitoring", site: "fl", category: "Staffing / Leadership", priority: "", notes: "Promoted from Cheetahs lead. Sarah Mayers continuing as Zebras lead + AD support.", deps: "Laura Baker MC transition (ID 25)" },
+  // === TRAINING AND PROFESSIONAL DEVELOPMENT ===
+  { id: "22", title: "Crozet Director — fill vacancy", status: "critical", site: "cr", category: "Training and Professional Development", priority: "", notes: "Kathe + Alicia interim. Lillie (CR Monkeys lead) and Kimberly S (MC Giraffes) being considered. External hire may be needed. CRITICAL — 2 of 3 sites without permanent director.", deps: "Staffing hole assessment; legal review of offer letter" },
+  { id: "25", title: "Laura Baker transition to Mill Creek", status: "monitoring", site: "mc", category: "Training and Professional Development", priority: "", notes: "Confirmed. Relocated from Forest Lakes effective Feb 23. Nancy (Training Coord.) supporting.", deps: "" },
+  { id: "26", title: "Jess Rybak onboarding as FL Director", status: "monitoring", site: "fl", category: "Training and Professional Development", priority: "", notes: "Promoted from Cheetahs lead. Sarah Mayers continuing as Zebras lead + AD support.", deps: "Laura Baker MC transition (ID 25)" },
 
-  // === STAFFING / RATIOS ===
-  { id: "23", title: "Crozet Zebras — hire 2nd teacher", status: "critical", site: "cr", category: "Staffing / Ratios", priority: "", notes: "14 children / 1 teacher. 3 over waiver cap of 11. Cannot resolve via move-ups.", deps: "Crozet Director hire (ID 22)" },
-  { id: "27", title: "FL Zebras — fill teacher vacancy", status: "critical", site: "fl", category: "Staffing / Ratios", priority: "", notes: "Sarah vacated to AD role. 9 children need a teacher. No confirmed replacement.", deps: "Jess Rybak stable (ID 26)" },
-  { id: "28", title: "MC Elephants — fill teacher vacancy", status: "critical", site: "mc", category: "Staffing / Ratios", priority: "", notes: "Jessica moving to admin/front desk (planned March). 9 children need a replacement.", deps: "Jessica transition timeline confirmed" },
+  // === HIRING & ONBOARDING ===
+  { id: "23", title: "Crozet Zebras — hire 2nd teacher", status: "critical", site: "cr", category: "Hiring & Onboarding", priority: "", notes: "14 children / 1 teacher. 3 over waiver cap of 11. Cannot resolve via move-ups.", deps: "Crozet Director hire (ID 22)" },
+  { id: "27", title: "FL Zebras — fill teacher vacancy", status: "critical", site: "fl", category: "Hiring & Onboarding", priority: "", notes: "Sarah vacated to AD role. 9 children need a teacher. No confirmed replacement.", deps: "Jess Rybak stable (ID 26)" },
+  { id: "28", title: "MC Elephants — fill teacher vacancy", status: "critical", site: "mc", category: "Hiring & Onboarding", priority: "", notes: "Jessica moving to admin/front desk (planned March). 9 children need a replacement.", deps: "Jessica transition timeline confirmed" },
 
   // === ENROLLMENT / MOVE-UPS ===
   { id: "24", title: "Crozet Tigers → Cheetahs move-ups", status: "inprogress", site: "cr", category: "Enrollment / Move-ups", priority: "", notes: "13 children / 1 teacher (Robin). 2 over cap. SIPE + Hamilton are oldest candidates. Cheetahs has 4 open spots.", deps: "Robin situation resolved (ID 20)" },
