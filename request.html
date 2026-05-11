@@ -289,24 +289,12 @@
 </div>
 
 <script type="module">
-  import { db } from "./js/firebase.js";
-  import {
-    collection,
-    doc,
-    getDocs,
-    setDoc,
-    Timestamp,
-  } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
-
-  const ACCESS_PASSWORD = "brightbeginnings2025";
   const SESSION_KEY = "bb_request_authed";
-  const TASKS_COLLECTION = "tasks";
 
   const loginView = document.getElementById("login-view");
   const formView = document.getElementById("form-view");
   const confirmView = document.getElementById("confirm-view");
 
-  // ── Auth ────────────────────────────────────────────────────
   function showForm() {
     loginView.style.display = "none";
     confirmView.style.display = "none";
@@ -337,15 +325,33 @@
 
   function attemptLogin() {
     const val = loginInput.value;
-    if (val === ACCESS_PASSWORD) {
-      sessionStorage.setItem(SESSION_KEY, "1");
-      loginInput.value = "";
-      loginErr.classList.remove("show");
-      showForm();
-    } else {
-      loginErr.classList.add("show");
-      loginInput.select();
-    }
+    loginInput.disabled = true;
+    document.getElementById("login-btn").disabled = true;
+    fetch("/api/verify-password", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ password: val }),
+    })
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.valid) {
+          sessionStorage.setItem(SESSION_KEY, "1");
+          loginInput.value = "";
+          loginErr.classList.remove("show");
+          showForm();
+        } else {
+          loginErr.classList.add("show");
+          loginInput.select();
+        }
+      })
+      .catch(() => {
+        loginErr.classList.add("show");
+        loginInput.select();
+      })
+      .finally(() => {
+        loginInput.disabled = false;
+        document.getElementById("login-btn").disabled = false;
+      });
   }
 
   document.getElementById("login-btn").addEventListener("click", attemptLogin);
@@ -357,7 +363,6 @@
     if (loginErr.classList.contains("show")) loginErr.classList.remove("show");
   });
 
-  // ── Form submit ─────────────────────────────────────────────
   const form = document.getElementById("request-form");
   const submitBtn = document.getElementById("submit-btn");
   const formErr = document.getElementById("form-error");
@@ -416,10 +421,9 @@
 
     let order = 0;
     try {
-      const snap = await getDocs(collection(db, TASKS_COLLECTION));
-      const peers = snap.docs
-        .map((d) => d.data())
-        .filter((t) => t.category === category && t.status !== "done");
+      const res = await fetch("/api/tasks/");
+      const allTasks = await res.json();
+      const peers = allTasks.filter((t) => t.category === category && t.status !== "done");
       const minOrder = peers.reduce(
         (m, t) => Math.min(m, typeof t.order === "number" ? t.order : 1e9),
         Infinity
@@ -438,11 +442,14 @@
       deps: "",
       dueDate: "",
       order,
-      updatedAt: Timestamp.now(),
     };
 
     try {
-      await setDoc(doc(db, TASKS_COLLECTION, id), task);
+      await fetch("/api/tasks/", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(task),
+      });
       showConfirmation();
     } catch (err) {
       console.error(err);

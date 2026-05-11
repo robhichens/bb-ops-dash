@@ -1,16 +1,3 @@
-import { db } from "./firebase.js";
-import {
-  collection,
-  doc,
-  getDocs,
-  setDoc,
-  Timestamp,
-} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
-
-const TASKS_COLLECTION = "tasks";
-const tasksCol = () => collection(db, TASKS_COLLECTION);
-const taskDoc = (id) => doc(db, TASKS_COLLECTION, String(id));
-
 let conversationHistory = [];
 let recognition = null;
 let isRecording = false;
@@ -43,8 +30,8 @@ function getElements() {
 
 async function getCurrentTasks() {
   try {
-    const snap = await getDocs(tasksCol());
-    const tasks = snap.docs.map((d) => d.data());
+    const res = await fetch("/api/tasks/");
+    const tasks = await res.json();
     return tasks
       .filter((t) => t.status !== "done")
       .map((t) => `- [${t.status}] ${t.title} (${t.category}, ${t.site})`)
@@ -55,8 +42,9 @@ async function getCurrentTasks() {
 }
 
 async function getNextId() {
-  const snap = await getDocs(tasksCol());
-  const ids = snap.docs.map((d) => parseInt(d.id, 10)).filter((n) => !isNaN(n));
+  const res = await fetch("/api/tasks/");
+  const tasks = await res.json();
+  const ids = tasks.map((t) => parseInt(t.id, 10)).filter((n) => !isNaN(n));
   return ids.length ? Math.max(...ids) + 1 : 100;
 }
 
@@ -99,8 +87,8 @@ function appendTaskPreview(taskData) {
 async function createTask(taskData, cardEl) {
   try {
     const nextId = await getNextId();
-    const snap = await getDocs(tasksCol());
-    const tasks = snap.docs.map((d) => d.data());
+    const res = await fetch("/api/tasks/");
+    const tasks = await res.json();
 
     let order;
     if (taskData.status === "done") {
@@ -123,10 +111,13 @@ async function createTask(taskData, cardEl) {
       deps: "",
       dueDate: taskData.dueDate || "",
       order,
-      updatedAt: Timestamp.now(),
     };
 
-    await setDoc(taskDoc(task.id), task);
+    await fetch("/api/tasks/", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(task),
+    });
 
     cardEl.querySelector(".voice-add-task-btn").textContent = "Added!";
     cardEl.querySelector(".voice-add-task-btn").disabled = true;

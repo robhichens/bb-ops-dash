@@ -1,24 +1,11 @@
 // ============================================================
 // app.js — Main application logic
-// Reads/writes all task data to Firestore in real time
+// Reads/writes all task data via REST API backed by Netlify Database
 // ============================================================
 
-import { db } from "./firebase.js";
 import { DEFAULT_TASKS } from "./data.js";
-import {
-  collection,
-  doc,
-  getDocs,
-  setDoc,
-  updateDoc,
-  deleteDoc,
-  onSnapshot,
-  writeBatch,
-  Timestamp,
-} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 // ─── Constants ───────────────────────────────────────────────
-const TASKS_COLLECTION = "tasks";
 const SITES = { cr: "Crozet", mc: "Mill Creek", fl: "Forest Lakes", all: "All sites" };
 const CAT_ORDER = [
   "Website & Digital", "Marketing & Enrollment", "Legal / Incident",
@@ -27,6 +14,7 @@ const CAT_ORDER = [
   "Classroom Projects", "Events and Community", "Other",
 ];
 const DONE_KEY = "__done__";
+const POLL_INTERVAL = 10000;
 
 // ─── State ───────────────────────────────────────────────────
 let tasks = [];
@@ -34,50 +22,72 @@ let nextId = 100;
 let expandedIds = {};
 let collapsedCats = new Set(JSON.parse(localStorage.getItem("bb_collapsed_cats") || "[]"));
 let categoryOrder = JSON.parse(localStorage.getItem("bb_cat_order") || "null");
-let doneCollapsed = true; // session-only — resets on every app open
+let doneCollapsed = true;
 let dragData = null;
-let unsubscribe = null;
+let pollTimer = null;
 
-// ─── Firestore helpers ───────────────────────────────────────
-const tasksCol = () => collection(db, TASKS_COLLECTION);
-const taskDoc = (id) => doc(db, TASKS_COLLECTION, String(id));
-
-async function seedIfEmpty() {
-  const snap = await getDocs(tasksCol());
-  if (!snap.empty) return;
-  const batch = writeBatch(db);
-  const counters = {};
-  DEFAULT_TASKS.forEach((t) => {
-    const idx = counters[t.category] || 0;
-    counters[t.category] = idx + 1;
-    batch.set(doc(db, TASKS_COLLECTION, String(t.id)), {
-      ...t, dueDate: "", order: idx, updatedAt: Timestamp.now(),
-    });
+// ─── API helpers ─────────────────────────────────────────────
+async function apiFetch(path, opts = {}) {
+  const res = await fetch(path, {
+    headers: { "Content-Type": "application/json" },
+    ...opts,
   });
-  await batch.commit();
+  return res.json();
 }
 
-function subscribeToTasks() {
-  if (unsubscribe) unsubscribe();
-  unsubscribe = onSnapshot(tasksCol(), (snap) => {
-    tasks = snap.docs.map((d) => ({ ...d.data(), id: String(d.id) }));
-    const numericIds = tasks.map((t) => parseInt(t.id, 10)).filter((n) => !isNaN(n));
-    if (numericIds.length) nextId = Math.max(...numericIds) + 1;
-    render();
-    updateSaveLabel();
+async function loadTasks() {
+  const data = await apiFetch("/api/tasks/");
+  tasks = data;
+  const numericIds = tasks.map((t) => parseInt(t.id, 10)).filter((n) => !isNaN(n));
+  if (numericIds.length) nextId = Math.max(...numericIds) + 1;
+  render();
+  updateSaveLabel();
+}
+
+async function seedIfEmpty() {
+  const seedTasks = DEFAULT_TASKS.map((t, i) => ({
+    ...t, dueDate: "", order: i, updatedAt: new Date().toISOString(),
+  }));
+  await apiFetch("/api/tasks/seed", {
+    method: "POST",
+    body: JSON.stringify({ seedTasks }),
   });
 }
 
 async function persistTask(task) {
-  await setDoc(taskDoc(task.id), { ...task, updatedAt: Timestamp.now() });
+  await apiFetch("/api/tasks/", {
+    method: "POST",
+    body: JSON.stringify(task),
+  });
+  await loadTasks();
 }
 
 async function patchTask(id, fields) {
-  await updateDoc(taskDoc(id), { ...fields, updatedAt: Timestamp.now() });
+  await apiFetch(`/api/tasks/${encodeURIComponent(id)}`, {
+    method: "PATCH",
+    body: JSON.stringify(fields),
+  });
+  await loadTasks();
 }
 
 async function removeTask(id) {
-  await deleteDoc(taskDoc(id));
+  await apiFetch(`/api/tasks/${encodeURIComponent(id)}`, {
+    method: "DELETE",
+  });
+  await loadTasks();
+}
+
+async function batchUpdate(operations) {
+  await apiFetch("/api/tasks/batch", {
+    method: "POST",
+    body: JSON.stringify({ operations }),
+  });
+  await loadTasks();
+}
+
+function startPolling() {
+  if (pollTimer) clearInterval(pollTimer);
+  pollTimer = setInterval(() => loadTasks().catch(() => {}), POLL_INTERVAL);
 }
 
 // ─── Date helpers ────────────────────────────────────────────
@@ -89,7 +99,7 @@ function formatDate(iso) {
 
 function formatTimestamp(ts) {
   if (!ts) return "";
-  const d = ts.toDate ? ts.toDate() : new Date(ts);
+  const d = new Date(ts);
   const diff = Math.floor((new Date() - d) / 1000);
   if (diff < 60) return "just now";
   if (diff < 3600) return `${Math.floor(diff / 60)}m ago`;
@@ -354,16 +364,15 @@ async function handleTaskDrop(draggedId, targetId, targetCat, before) {
   catTasks.splice(insertIndex, 0, dragged);
 
   try {
-    const batch = writeBatch(db);
-    catTasks.forEach((t, i) => {
-      const updates = { order: i };
+    const operations = catTasks.map((t, i) => {
+      const fields = { order: i };
       if (t.id === draggedId) {
-        if (targetCat !== dragged.category) updates.category = targetCat;
-        updates.updatedAt = Timestamp.now();
+        if (targetCat !== dragged.category) fields.category = targetCat;
+        fields.updatedAt = new Date().toISOString();
       }
-      batch.update(taskDoc(t.id), updates);
+      return { type: "update", id: t.id, fields };
     });
-    await batch.commit();
+    await batchUpdate(operations);
   } catch {
     showToast("Error reordering");
   }
@@ -391,7 +400,6 @@ function clearDropIndicators() {
 function bindListEvents() {
   const list = document.getElementById("task-list");
 
-  // Section header click → toggle collapse (skip clicks on drag handle)
   list.querySelectorAll(".section-hd").forEach((el) => {
     el.addEventListener("click", (e) => {
       if (e.target.closest(".drag-handle")) return;
@@ -418,7 +426,6 @@ function bindListEvents() {
     });
   });
 
-  // Task expand/collapse on click of task-top (skip clicks on drag handle)
   list.querySelectorAll(".task-top").forEach((el) => {
     el.addEventListener("click", (e) => {
       if (e.target.closest(".drag-handle")) return;
@@ -429,7 +436,6 @@ function bindListEvents() {
     });
   });
 
-  // ── Drag handles arm parent for native HTML5 drag ──
   list.querySelectorAll(".task-drag").forEach((handle) => {
     const card = handle.closest(".task-card");
     handle.addEventListener("mousedown", (e) => {
@@ -448,7 +454,6 @@ function bindListEvents() {
     handle.addEventListener("click", (e) => e.stopPropagation());
   });
 
-  // ── Task drag/drop ──
   list.querySelectorAll(".task-card").forEach((card) => {
     card.addEventListener("dragstart", (e) => {
       if (!card.draggable) { e.preventDefault(); return; }
@@ -488,13 +493,8 @@ function bindListEvents() {
       const targetId = card.dataset.taskId;
       const draggedId = dragData.id;
       clearDropIndicators();
-      // Don't allow dropping a non-done task into the Done section via card-drop;
-      // dropping onto a done card just reorders within done — but we treat done as
-      // special: tasks in done section share status "done", so reordering only
-      // shuffles within the active category. Skip cross-status drops here.
       const draggedTask = tasks.find((t) => t.id === draggedId);
       if (draggedTask && draggedTask.status === "done") {
-        // Reorder among done tasks only — share order field
         await reorderDoneTasks(draggedId, targetId, before);
       } else {
         await handleTaskDrop(draggedId, targetId, targetCat, before);
@@ -502,7 +502,6 @@ function bindListEvents() {
     });
   });
 
-  // Drop on empty section body (catch-all when not over a card)
   list.querySelectorAll(".section-body[data-cat-body]").forEach((body) => {
     body.addEventListener("dragover", (e) => {
       if (!dragData || dragData.type !== "task") return;
@@ -514,12 +513,11 @@ function bindListEvents() {
       e.preventDefault();
       const cat = body.dataset.catBody;
       const draggedTask = tasks.find((t) => t.id === dragData.id);
-      if (draggedTask && draggedTask.status === "done") return; // ignore
+      if (draggedTask && draggedTask.status === "done") return;
       await handleTaskDrop(dragData.id, null, cat, false);
     });
   });
 
-  // ── Category drag/drop on section-wrap ──
   list.querySelectorAll(".section-wrap[data-cat-wrap]").forEach((wrap) => {
     wrap.addEventListener("dragstart", (e) => {
       if (!wrap.draggable) { e.preventDefault(); return; }
@@ -559,7 +557,6 @@ function bindListEvents() {
     });
   });
 
-  // Form interactions
   list.querySelectorAll("[data-save-id]").forEach((btn) => {
     btn.addEventListener("click", (e) => {
       e.stopPropagation();
@@ -611,8 +608,6 @@ function bindListEvents() {
   });
 }
 
-// When a task's status changes, also drop it to the bottom of done if newly done,
-// or to the bottom of its category if reactivated.
 async function handleStatusChange(id, newStatus) {
   const t = tasks.find((x) => x.id === id);
   if (!t) return;
@@ -656,13 +651,12 @@ async function reorderDoneTasks(draggedId, targetId, before) {
   }
   doneTasks.splice(insertIndex, 0, dragged);
   try {
-    const batch = writeBatch(db);
-    doneTasks.forEach((t, i) => {
-      const updates = { order: i };
-      if (t.id === draggedId) updates.updatedAt = Timestamp.now();
-      batch.update(taskDoc(t.id), updates);
+    const operations = doneTasks.map((t, i) => {
+      const fields = { order: i };
+      if (t.id === draggedId) fields.updatedAt = new Date().toISOString();
+      return { type: "update", id: t.id, fields };
     });
-    await batch.commit();
+    await batchUpdate(operations);
   } catch {
     showToast("Error reordering");
   }
@@ -679,11 +673,7 @@ export function showDigest() {
     .sort((a, b) => new Date(a.dueDate) - new Date(b.dueDate));
   const recentlyUpdated = [...tasks]
     .filter(t => t.updatedAt && t.status !== "done")
-    .sort((a, b) => {
-      const ta = a.updatedAt.toDate ? a.updatedAt.toDate() : new Date(a.updatedAt);
-      const tb = b.updatedAt.toDate ? b.updatedAt.toDate() : new Date(b.updatedAt);
-      return tb - ta;
-    })
+    .sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt))
     .slice(0, 5);
   const done = tasks.filter(t => t.status === "done");
 
@@ -801,7 +791,8 @@ export function exportData() {
 // ─── Init ─────────────────────────────────────────────────────
 export async function init() {
   await seedIfEmpty();
-  subscribeToTasks();
+  await loadTasks();
+  startPolling();
 
   document.getElementById("modal").addEventListener("click", (e) => {
     if (e.target === document.getElementById("modal")) closeModal();
@@ -817,7 +808,6 @@ export async function init() {
   });
   document.getElementById("f-search").addEventListener("input", render);
 
-  // Reset draggable flags if mousedown on a drag handle didn't end in a drag
   document.addEventListener("mouseup", () => {
     document.querySelectorAll(".task-card[draggable='true'], .section-wrap[draggable='true']")
       .forEach((el) => { el.draggable = false; });
