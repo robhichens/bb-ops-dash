@@ -1,6 +1,6 @@
 // ============================================================
 // data.js — Default task seed data
-// Only used on first load (when Firestore collection is empty)
+// Only used on first load (when the database is empty)
 // ============================================================
 
 export const DEFAULT_TASKS = [
