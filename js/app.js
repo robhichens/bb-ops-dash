@@ -87,7 +87,10 @@ async function batchUpdate(operations) {
 
 function startPolling() {
   if (pollTimer) clearInterval(pollTimer);
-  pollTimer = setInterval(() => loadTasks().catch(() => {}), POLL_INTERVAL);
+  pollTimer = setInterval(() => {
+    if (document.activeElement?.classList.contains("note-area")) return;
+    loadTasks().catch(() => {});
+  }, POLL_INTERVAL);
 }
 
 // ─── Date helpers ────────────────────────────────────────────
