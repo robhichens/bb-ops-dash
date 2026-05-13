@@ -30,6 +30,8 @@ export default async (req) => {
         if (op.fields.updatedAt !== undefined) fields.updatedAt = new Date(op.fields.updatedAt);
         if (op.fields.status !== undefined) fields.status = op.fields.status;
         if (op.fields.order !== undefined) fields.taskOrder = op.fields.order;
+        if (op.fields.priority !== undefined) fields.priority = op.fields.priority;
+        if (op.fields.hiddenFromReport !== undefined) fields.hiddenFromReport = op.fields.hiddenFromReport;
         await db.update(tasks).set(fields).where(eq(tasks.id, op.id));
       } else if (op.type === "set") {
         const row = taskToRow(op.data);
@@ -69,6 +71,7 @@ export default async (req) => {
       if (body.deps !== undefined) fields.deps = body.deps;
       if (body.dueDate !== undefined) fields.dueDate = body.dueDate;
       if (body.order !== undefined) fields.taskOrder = body.order;
+      if (body.hiddenFromReport !== undefined) fields.hiddenFromReport = body.hiddenFromReport;
       fields.updatedAt = new Date();
       await db.update(tasks).set(fields).where(eq(tasks.id, id));
       return Response.json({ ok: true });
@@ -95,6 +98,7 @@ function rowToTask(row) {
     deps: row.deps,
     dueDate: row.dueDate,
     order: row.taskOrder,
+    hiddenFromReport: row.hiddenFromReport ?? false,
     updatedAt: row.updatedAt ? row.updatedAt.toISOString() : null,
   };
 }
@@ -103,7 +107,7 @@ function taskToRow(t) {
   return {
     id: String(t.id),
     title: t.title || "",
-    status: t.status || "new",
+    status: t.status || "backlog",
     site: t.site || "all",
     category: t.category || "Other",
     priority: t.priority || "",
@@ -111,6 +115,7 @@ function taskToRow(t) {
     deps: t.deps || "",
     dueDate: t.dueDate || "",
     taskOrder: typeof t.order === "number" ? t.order : 0,
+    hiddenFromReport: t.hiddenFromReport ?? false,
     updatedAt: new Date(),
   };
 }
