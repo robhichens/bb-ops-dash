@@ -25,11 +25,11 @@
 
   <!-- Stats -->
   <div class="stats">
-    <div class="stat s-new" ><div class="stat-num" id="s-new" >—</div><div class="stat-label">New</div></div>
-    <div class="stat s-crit"><div class="stat-num" id="s-crit">—</div><div class="stat-label">Critical</div></div>
-    <div class="stat s-prog"><div class="stat-num" id="s-prog">—</div><div class="stat-label">In progress</div></div>
-    <div class="stat s-mon" ><div class="stat-num" id="s-mon" >—</div><div class="stat-label">Monitoring</div></div>
-    <div class="stat s-done"><div class="stat-num" id="s-done">—</div><div class="stat-label">Done</div></div>
+    <div class="stat s-backlog"><div class="stat-num" id="s-backlog">—</div><div class="stat-label">Backlog</div></div>
+    <div class="stat s-todo">  <div class="stat-num" id="s-todo">  —</div><div class="stat-label">To Do</div></div>
+    <div class="stat s-doing"> <div class="stat-num" id="s-doing"> —</div><div class="stat-label">Doing</div></div>
+    <div class="stat s-parked"><div class="stat-num" id="s-parked">—</div><div class="stat-label">Parked</div></div>
+    <div class="stat s-done">  <div class="stat-num" id="s-done">  —</div><div class="stat-label">Done</div></div>
   </div>
 
   <!-- Filters -->
@@ -37,11 +37,18 @@
     <label>Filter:</label>
     <select id="f-status">
       <option value="">All statuses</option>
-      <option value="new">New</option>
-      <option value="critical">Critical</option>
-      <option value="inprogress">In progress</option>
-      <option value="monitoring">Monitoring</option>
+      <option value="backlog">Backlog</option>
+      <option value="todo">To Do</option>
+      <option value="doing">Doing</option>
+      <option value="parked">Parked</option>
       <option value="done">Done</option>
+    </select>
+    <select id="f-priority">
+      <option value="">All priorities</option>
+      <option value="q1">Q1 — Urgent &amp; Important</option>
+      <option value="q2">Q2 — Plan (Important)</option>
+      <option value="q3">Q3 — Delegate (Urgent)</option>
+      <option value="q4">Q4 — Eliminate</option>
     </select>
     <select id="f-site">
       <option value="">All sites</option>
@@ -101,19 +108,21 @@
     <div class="field">
       <label>Status</label>
       <select id="m-status">
-        <option value="new" selected>New</option>
-        <option value="critical">Critical</option>
-        <option value="inprogress">In progress</option>
-        <option value="monitoring">Monitoring</option>
+        <option value="backlog" selected>Backlog</option>
+        <option value="todo">To Do</option>
+        <option value="doing">Doing</option>
+        <option value="parked">Parked</option>
         <option value="done">Done</option>
       </select>
     </div>
     <div class="field">
-      <label>Priority flag (optional)</label>
+      <label>Priority quadrant (optional)</label>
       <select id="m-priority">
         <option value="">None</option>
-        <option value="1">Priority 1 — This week</option>
-        <option value="2">Priority 2 — Starting Monday</option>
+        <option value="q1">Q1 — Urgent &amp; Important</option>
+        <option value="q2">Q2 — Plan (Important, Not Urgent)</option>
+        <option value="q3">Q3 — Delegate (Urgent, Not Important)</option>
+        <option value="q4">Q4 — Eliminate (Not Urgent, Not Important)</option>
       </select>
     </div>
     <div class="field">

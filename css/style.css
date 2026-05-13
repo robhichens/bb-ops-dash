@@ -18,6 +18,7 @@
   --blue: #1a4f8a;   --blue-bg: #edf3fb;
   --green: #2d5a3d;  --green-bg: #e8f0eb;
   --sage: #5a7a4f;   --sage-bg: #d8e8c8;
+  --purple: #7c5cbf; --purple-bg: #f0ebfb;
   --radius: 10px;
   --radius-sm: 6px;
 }
@@ -70,11 +71,11 @@ body {
 .stat { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 14px 16px; }
 .stat-num   { font-size: 28px; font-weight: 600; line-height: 1; }
 .stat-label { font-size: 11px; color: var(--text2); margin-top: 4px; text-transform: uppercase; letter-spacing: 0.06em; font-weight: 500; }
-.stat.s-new  .stat-num { color: var(--sage); }
-.stat.s-crit .stat-num { color: var(--red); }
-.stat.s-prog .stat-num { color: var(--amber); }
-.stat.s-mon  .stat-num { color: var(--blue); }
-.stat.s-done .stat-num { color: var(--green); }
+.stat.s-backlog .stat-num { color: var(--sage); }
+.stat.s-todo   .stat-num { color: var(--blue); }
+.stat.s-doing  .stat-num { color: var(--amber); }
+.stat.s-parked .stat-num { color: var(--purple); }
+.stat.s-done   .stat-num { color: var(--green); }
 
 /* ── Filters ── */
 .filters { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin-bottom: 20px; }
@@ -139,11 +140,11 @@ input[type=text] { width: 200px; }
   gap: 12px;
 }
 .task-priority { width: 3px; height: 36px; border-radius: 2px; flex-shrink: 0; }
-.p-critical  { background: var(--red); }
-.p-inprogress{ background: var(--amber); }
-.p-monitoring{ background: var(--blue); }
-.p-done      { background: #aaa; }
-.p-new       { background: var(--sage); }
+.p-backlog { background: var(--sage); }
+.p-todo    { background: var(--blue); }
+.p-doing   { background: var(--amber); }
+.p-parked  { background: var(--purple); }
+.p-done    { background: #aaa; }
 
 .task-main        { flex: 1; min-width: 0; }
 .task-title-row   { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
@@ -151,11 +152,11 @@ input[type=text] { width: 200px; }
 .task-meta        { display: flex; gap: 6px; margin-top: 4px; flex-wrap: wrap; }
 
 .badge { display: inline-flex; align-items: center; font-size: 11px; font-weight: 500; padding: 2px 8px; border-radius: 100px; white-space: nowrap; }
-.b-crit { background: var(--red-bg);   color: var(--red); }
-.b-prog { background: var(--amber-bg); color: var(--amber); }
-.b-mon  { background: var(--blue-bg);  color: var(--blue); }
-.b-done { background: var(--green-bg); color: var(--green); }
-.b-new  { background: var(--sage-bg);  color: var(--sage); }
+.b-backlog { background: var(--sage-bg);    color: var(--sage); }
+.b-todo    { background: var(--blue-bg);    color: var(--blue); }
+.b-doing   { background: var(--amber-bg);   color: var(--amber); }
+.b-parked  { background: var(--purple-bg);  color: var(--purple); }
+.b-done    { background: var(--green-bg);   color: var(--green); }
 .b-cr   { background: #fdf0e8; color: #b05a1a; }
 .b-mc   { background: #e8f5ee; color: #1a6b45; }
 .b-fl   { background: #edf3fb; color: #1a4f8a; }
@@ -218,11 +219,11 @@ textarea.note-area:focus { border-color: var(--accent); background: var(--surfac
   transition: all 0.1s;
 }
 .sb:hover { background: var(--surface2); }
-.sb.active-critical  { background: var(--red-bg);   color: var(--red);   border-color: var(--red); }
-.sb.active-inprogress{ background: var(--amber-bg); color: var(--amber); border-color: var(--amber); }
-.sb.active-monitoring{ background: var(--blue-bg);  color: var(--blue);  border-color: var(--blue); }
-.sb.active-done      { background: var(--green-bg); color: var(--green); border-color: var(--green); }
-.sb.active-new       { background: var(--sage-bg);  color: var(--sage);  border-color: var(--sage); }
+.sb.active-backlog { background: var(--sage-bg);    color: var(--sage);   border-color: var(--sage); }
+.sb.active-todo    { background: var(--blue-bg);    color: var(--blue);   border-color: var(--blue); }
+.sb.active-doing   { background: var(--amber-bg);   color: var(--amber);  border-color: var(--amber); }
+.sb.active-parked  { background: var(--purple-bg);  color: var(--purple); border-color: var(--purple); }
+.sb.active-done    { background: var(--green-bg);   color: var(--green);  border-color: var(--green); }
 
 .del-btn {
   font-family: 'DM Sans', sans-serif;
@@ -236,10 +237,12 @@ textarea.note-area:focus { border-color: var(--accent); background: var(--surfac
 }
 .del-btn:hover { color: var(--red); background: var(--red-bg); }
 
-/* ── Priority flags ── */
-.flag { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; padding: 2px 7px; border-radius: 100px; }
-.flag-1 { background: #fdf0e8; color: #b05a1a; }
-.flag-2 { background: #f5ecfb; color: #5b3fa6; }
+/* ── Priority flags (Covey quadrants) ── */
+.flag { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; padding: 2px 8px; border-radius: 100px; }
+.flag-q1 { background: var(--red-bg);    color: var(--red); }
+.flag-q2 { background: var(--blue-bg);   color: var(--blue); }
+.flag-q3 { background: var(--amber-bg);  color: var(--amber); }
+.flag-q4 { background: var(--surface2);  color: var(--text3); }
 
 /* ── Modal ── */
 .modal-overlay {
@@ -402,8 +405,8 @@ textarea.note-area:focus { border-color: var(--accent); background: var(--surfac
 .task-card.is-done .task-name { color: var(--text2); }
 .task-card.is-done.expanded { opacity: 1; }
 
-/* ── New task styling ── */
-.task-card.is-new .task-name {
+/* ── Backlog task styling ── */
+.task-card.is-backlog .task-name {
   background: var(--sage-bg);
   padding: 1px 7px;
   border-radius: 4px;

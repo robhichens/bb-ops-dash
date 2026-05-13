@@ -96,6 +96,29 @@ function startPolling() {
   }, POLL_INTERVAL);
 }
 
+// ─── One-time status/priority migration ──────────────────────
+// Converts old status values (new, critical, inprogress, monitoring)
+// and old priority flags (1, 2) to the new Kanban + Covey scheme.
+// Safe to run every time — no-op once all tasks are updated.
+async function migrateLegacyStatuses() {
+  const STATUS_MAP = { new: "backlog", critical: "backlog", inprogress: "todo", monitoring: "parked" };
+  const PRIORITY_MAP = { "1": "q1", "2": "q2" };
+  const toMigrate = tasks.filter(t =>
+    STATUS_MAP[t.status] !== undefined || PRIORITY_MAP[t.priority] !== undefined
+  );
+  if (!toMigrate.length) return;
+  console.log(`Migrating ${toMigrate.length} task(s) to Kanban statuses / Covey priorities…`);
+  const operations = toMigrate.map(t => {
+    const fields = {};
+    if (STATUS_MAP[t.status] !== undefined) fields.status = STATUS_MAP[t.status];
+    // Auto-tag formerly-critical tasks as Q1 if they had no priority set
+    if (t.status === "critical" && !t.priority) fields.priority = "q1";
+    if (PRIORITY_MAP[t.priority] !== undefined) fields.priority = PRIORITY_MAP[t.priority];
+    return { type: "update", id: t.id, fields };
+  });
+  await batchUpdate(operations);
+}
+
 // ─── One-time category migration ─────────────────────────────
 // Moves tasks from retired categories to HR / Legal on first load.
 // Safe to run every time — skips if nothing needs moving.
@@ -145,19 +168,26 @@ function siteBadge(s) { return `<span class="badge b-${s}">${siteLabel(s)}</span
 
 function statusBadge(s) {
   const map = {
-    new: ["b-new", "New"],
-    critical: ["b-crit", "Critical"],
-    inprogress: ["b-prog", "In progress"],
-    monitoring: ["b-mon", "Monitoring"],
-    done: ["b-done", "Done"],
+    backlog: ["b-backlog", "Backlog"],
+    todo:    ["b-todo",    "To Do"],
+    doing:   ["b-doing",   "Doing"],
+    parked:  ["b-parked",  "Parked"],
+    done:    ["b-done",    "Done"],
   };
   const [cls, lbl] = map[s] || ["b-all", s];
   return `<span class="badge ${cls}">${lbl}</span>`;
 }
 
+const Q_LABELS = {
+  q1: "Q1 — Urgent & Important",
+  q2: "Q2 — Important, Not Urgent",
+  q3: "Q3 — Urgent, Not Important",
+  q4: "Q4 — Not Urgent, Not Important",
+};
+
 function priorityFlag(p) {
   if (!p) return "";
-  return `<span class="flag flag-${p}">P${p}</span>`;
+  return `<span class="flag flag-${p}" title="${Q_LABELS[p] || p}">${p.toUpperCase()}</span>`;
 }
 
 function showToast(msg) {
@@ -174,13 +204,13 @@ function updateSaveLabel() {
 }
 
 function updateStats() {
-  const c = { new: 0, critical: 0, inprogress: 0, monitoring: 0, done: 0 };
+  const c = { backlog: 0, todo: 0, doing: 0, parked: 0, done: 0 };
   tasks.forEach((t) => (c[t.status] = (c[t.status] || 0) + 1));
-  document.getElementById("s-new").textContent = c.new || 0;
-  document.getElementById("s-crit").textContent = c.critical || 0;
-  document.getElementById("s-prog").textContent = c.inprogress || 0;
-  document.getElementById("s-mon").textContent = c.monitoring || 0;
-  document.getElementById("s-done").textContent = c.done || 0;
+  document.getElementById("s-backlog").textContent = c.backlog || 0;
+  document.getElementById("s-todo").textContent    = c.todo    || 0;
+  document.getElementById("s-doing").textContent   = c.doing   || 0;
+  document.getElementById("s-parked").textContent  = c.parked  || 0;
+  document.getElementById("s-done").textContent    = c.done    || 0;
 }
 
 function updateCatFilter() {
@@ -193,13 +223,15 @@ function updateCatFilter() {
 }
 
 function filtered() {
-  const fs = document.getElementById("f-status").value;
+  const fs  = document.getElementById("f-status").value;
+  const fp  = document.getElementById("f-priority").value;
   const fsi = document.getElementById("f-site").value;
   const fcat = document.getElementById("f-cat").value;
-  const fq = document.getElementById("f-search").value.toLowerCase();
+  const fq  = document.getElementById("f-search").value.toLowerCase();
   return tasks.filter((t) => {
-    if (fs && t.status !== fs) return false;
-    if (fsi && t.site !== fsi) return false;
+    if (fs  && t.status   !== fs)  return false;
+    if (fp  && t.priority !== fp)  return false;
+    if (fsi && t.site     !== fsi) return false;
     if (fcat && t.category !== fcat) return false;
     if (fq && !(
       t.title.toLowerCase().includes(fq) ||
@@ -241,7 +273,7 @@ function saveCategoryOrder(order) {
 function renderTaskCard(t) {
   const updatedStr = t.updatedAt ? formatTimestamp(t.updatedAt) : "";
   return `
-    <div class="task-card${expandedIds[t.id] ? " expanded" : ""}${t.status === "done" ? " is-done" : ""}${t.status === "new" ? " is-new" : ""}" id="tc-${t.id}" data-task-id="${t.id}" data-task-cat="${t.category}">
+    <div class="task-card${expandedIds[t.id] ? " expanded" : ""}${t.status === "done" ? " is-done" : ""}${t.status === "backlog" ? " is-backlog" : ""}" id="tc-${t.id}" data-task-id="${t.id}" data-task-cat="${t.category}">
       <div class="task-top">
         <span class="drag-handle task-drag" title="Drag to reorder">⋮⋮</span>
         <div class="task-priority p-${t.status}"></div>
@@ -284,11 +316,11 @@ function renderTaskCard(t) {
           <div class="det-row">
             <span class="det-label">Status</span>
             <div class="status-btns">
-              <button class="sb${t.status === "new" ? " active-new" : ""}" data-set-status="${t.id}|new">New</button>
-              <button class="sb${t.status === "critical" ? " active-critical" : ""}" data-set-status="${t.id}|critical">Critical</button>
-              <button class="sb${t.status === "inprogress" ? " active-inprogress" : ""}" data-set-status="${t.id}|inprogress">In progress</button>
-              <button class="sb${t.status === "monitoring" ? " active-monitoring" : ""}" data-set-status="${t.id}|monitoring">Monitoring</button>
-              <button class="sb${t.status === "done" ? " active-done" : ""}" data-set-status="${t.id}|done">Done</button>
+              <button class="sb${t.status === "backlog" ? " active-backlog" : ""}" data-set-status="${t.id}|backlog">Backlog</button>
+              <button class="sb${t.status === "todo"    ? " active-todo"    : ""}" data-set-status="${t.id}|todo">To Do</button>
+              <button class="sb${t.status === "doing"   ? " active-doing"   : ""}" data-set-status="${t.id}|doing">Doing</button>
+              <button class="sb${t.status === "parked"  ? " active-parked"  : ""}" data-set-status="${t.id}|parked">Parked</button>
+              <button class="sb${t.status === "done"    ? " active-done"    : ""}" data-set-status="${t.id}|done">Done</button>
             </div>
           </div>
           <div class="det-row">
@@ -713,7 +745,7 @@ async function handleStatusChange(id, newStatus) {
       const doneTasks = tasks.filter((x) => x.status === "done");
       const maxOrder = doneTasks.reduce((m, x) => Math.max(m, taskOrderVal(x)), -1);
       await patchTask(id, { status: newStatus, order: maxOrder + 1 });
-    } else if (newStatus === "new" && t.status !== "new") {
+    } else if (newStatus === "backlog" && t.status !== "backlog") {
       const catTasks = tasks.filter(
         (x) => x.category === t.category && x.status !== "done" && x.id !== id
       );
@@ -764,7 +796,7 @@ export function showDigest() {
   const now = new Date();
   const weekFromNow = new Date(now.getTime() + 7 * 86400000);
 
-  const critical = tasks.filter(t => t.status === "critical");
+  const q1items = tasks.filter(t => t.priority === "q1" && t.status !== "done");
   const dueSoon = tasks
     .filter(t => t.dueDate && t.status !== "done" && new Date(t.dueDate + "T00:00:00") <= weekFromNow)
     .sort((a, b) => new Date(a.dueDate) - new Date(b.dueDate));
@@ -780,9 +812,9 @@ export function showDigest() {
       <p>${now.toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric", year: "numeric" })}</p>
     </div>
     <div class="digest-stats">
-      <div class="ds"><span class="ds-n" style="color:var(--red)">${critical.length}</span><span class="ds-l">Critical</span></div>
-      <div class="ds"><span class="ds-n" style="color:var(--amber)">${tasks.filter(t=>t.status==="inprogress").length}</span><span class="ds-l">In progress</span></div>
-      <div class="ds"><span class="ds-n" style="color:var(--blue)">${tasks.filter(t=>t.status==="monitoring").length}</span><span class="ds-l">Monitoring</span></div>
+      <div class="ds"><span class="ds-n" style="color:var(--red)">${q1items.length}</span><span class="ds-l">Q1 Items</span></div>
+      <div class="ds"><span class="ds-n" style="color:var(--amber)">${tasks.filter(t=>t.status==="doing").length}</span><span class="ds-l">Doing</span></div>
+      <div class="ds"><span class="ds-n" style="color:var(--purple)">${tasks.filter(t=>t.status==="parked").length}</span><span class="ds-l">Parked</span></div>
       <div class="ds"><span class="ds-n" style="color:var(--green)">${done.length}</span><span class="ds-l">Done</span></div>
     </div>`;
 
@@ -794,9 +826,9 @@ export function showDigest() {
     html += `</div>`;
   }
 
-  if (critical.length) {
-    html += `<div class="digest-section"><div class="digest-section-title">Critical items</div>`;
-    critical.forEach(t => {
+  if (q1items.length) {
+    html += `<div class="digest-section"><div class="digest-section-title">Q1 — Urgent &amp; Important</div>`;
+    q1items.forEach(t => {
       html += `<div class="digest-item"><span class="badge b-cr">${siteLabel(t.site)}</span> <span class="digest-item-title">${t.title}</span></div>`;
     });
     html += `</div>`;
@@ -878,7 +910,7 @@ export async function addTask() {
 
 // ─── Boss report ─────────────────────────────────────────────
 function statusLabel(s) {
-  return { critical: "Critical", inprogress: "In Progress", monitoring: "Monitoring", done: "Done", new: "New" }[s] || s;
+  return { backlog: "Backlog", todo: "To Do", doing: "Doing", parked: "Parked", done: "Done" }[s] || s;
 }
 
 export function openBossReport() {
@@ -889,17 +921,17 @@ export function openBossReport() {
   const visible  = tasks.filter(t => !t.hiddenFromReport);
   const active   = visible.filter(t => t.status !== "done");
   const done     = visible.filter(t => t.status === "done");
-  const critical = active.filter(t => t.status === "critical");
+  const q1items  = active.filter(t => t.priority === "q1");
   const overdue  = active.filter(t => t.dueDate && new Date(t.dueDate + "T00:00:00") < now);
   const dueSoon  = active
     .filter(t => t.dueDate && new Date(t.dueDate + "T00:00:00") >= now && new Date(t.dueDate + "T00:00:00") <= weekFromNow)
     .sort((a, b) => new Date(a.dueDate) - new Date(b.dueDate));
 
   const byStatus = {
-    critical:   active.filter(t => t.status === "critical").length,
-    inprogress: active.filter(t => t.status === "inprogress").length,
-    monitoring: active.filter(t => t.status === "monitoring").length,
-    new:        active.filter(t => t.status === "new").length,
+    backlog: active.filter(t => t.status === "backlog").length,
+    todo:    active.filter(t => t.status === "todo").length,
+    doing:   active.filter(t => t.status === "doing").length,
+    parked:  active.filter(t => t.status === "parked").length,
   };
 
   // Category grouping — same order as the main dashboard
@@ -911,18 +943,18 @@ export function openBossReport() {
   // ── Narrative paragraph ──────────────────────────────────────
   const dateStr = now.toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric", year: "numeric" });
   let narrative = `As of ${dateStr}, the operations team is managing <strong>${active.length} active task${active.length !== 1 ? "s" : ""}</strong> across ${cats.length} area${cats.length !== 1 ? "s" : ""}.`;
-  if (critical.length) narrative += ` <strong>${critical.length} item${critical.length !== 1 ? "s are" : " is"} critical</strong> and require immediate attention.`;
+  if (q1items.length)  narrative += ` <strong>${q1items.length} item${q1items.length !== 1 ? "s are" : " is"} flagged Q1</strong> (Urgent &amp; Important) and require immediate attention.`;
   if (overdue.length)  narrative += ` <strong>${overdue.length} task${overdue.length !== 1 ? "s are" : " is"} overdue.</strong>`;
   if (done.length)     narrative += ` ${done.length} task${done.length !== 1 ? "s have" : " has"} been completed.`;
 
-  // ── Critical items table ──────────────────────────────────────
-  const criticalSection = critical.length ? `
+  // ── Q1 items table ────────────────────────────────────────────
+  const criticalSection = q1items.length ? `
     <div class="r-section">
-      <h2>Critical Items <span class="r-badge r-badge-crit">${critical.length}</span></h2>
+      <h2>Q1 — Urgent &amp; Important <span class="r-badge r-badge-crit">${q1items.length}</span></h2>
       <table class="r-table">
         <thead><tr><th>Task</th><th>Area</th><th>Site</th><th>Notes</th></tr></thead>
         <tbody>
-          ${critical.map(t => `
+          ${q1items.map(t => `
             <tr class="crit-row">
               <td class="t-title">${t.title}</td>
               <td>${t.category}</td>
@@ -989,7 +1021,7 @@ export function openBossReport() {
   <title>BB Ops Report — ${now.toLocaleDateString()}</title>
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
   <style>
-    :root { --accent:#2d5a3d; --red:#c0392b; --amber:#b7650a; --blue:#1a4f8a; --green:#2d5a3d; --sage:#5a7a4f; }
+    :root { --accent:#2d5a3d; --red:#c0392b; --amber:#b7650a; --blue:#1a4f8a; --green:#2d5a3d; --sage:#5a7a4f; --purple:#7c5cbf; }
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     body { font-family:'DM Sans',sans-serif; background:#fff; color:#1a1816; font-size:13px; line-height:1.5; }
 
@@ -1023,11 +1055,11 @@ export function openBossReport() {
     .stat-card { background:#f5f3ef; border-radius:8px; padding:14px 10px; text-align:center; }
     .stat-num { font-size:26px; font-weight:700; line-height:1; }
     .stat-lbl { font-size:10px; text-transform:uppercase; letter-spacing:0.05em; color:#6b6560; margin-top:3px; font-family:'DM Mono',monospace; }
-    .sc-critical   .stat-num { color:var(--red); }
-    .sc-inprogress .stat-num { color:var(--amber); }
-    .sc-monitoring .stat-num { color:var(--blue); }
-    .sc-new        .stat-num { color:var(--sage); }
-    .sc-done       .stat-num { color:var(--green); }
+    .sc-backlog .stat-num { color:var(--sage); }
+    .sc-todo    .stat-num { color:var(--blue); }
+    .sc-doing   .stat-num { color:var(--amber); }
+    .sc-parked  .stat-num { color:var(--purple); }
+    .sc-done    .stat-num { color:var(--green); }
 
     /* ── Tables ── */
     .r-table { width:100%; border-collapse:collapse; font-size:12px; margin-bottom:4px; }
@@ -1043,11 +1075,11 @@ export function openBossReport() {
     .overdue-row .flag-cell { color:var(--red); }
 
     .s-pill { display:inline-block; font-size:11px; font-weight:500; padding:2px 7px; border-radius:100px; white-space:nowrap; }
-    .s-critical   { background:#fdf0ee; color:var(--red); }
-    .s-inprogress { background:#fdf5e8; color:var(--amber); }
-    .s-monitoring { background:#edf3fb; color:var(--blue); }
-    .s-done       { background:#e8f0eb; color:var(--green); }
-    .s-new        { background:#d8e8c8; color:var(--sage); }
+    .s-backlog { background:#d8e8c8; color:var(--sage); }
+    .s-todo    { background:#edf3fb; color:var(--blue); }
+    .s-doing   { background:#fdf5e8; color:var(--amber); }
+    .s-parked  { background:#f0ebfb; color:var(--purple); }
+    .s-done    { background:#e8f0eb; color:var(--green); }
 
     .cat-hdg { font-family:'DM Mono',monospace; font-size:11px; font-weight:600; text-transform:uppercase; letter-spacing:0.08em; color:#6b6560; margin:24px 0 8px; }
     .cat-hdg:first-child { margin-top:0; }
@@ -1092,11 +1124,11 @@ export function openBossReport() {
     <h2>Executive Summary</h2>
     <p class="narrative">${narrative}</p>
     <div class="stat-grid">
-      <div class="stat-card sc-critical">  <div class="stat-num">${byStatus.critical}</div>  <div class="stat-lbl">Critical</div></div>
-      <div class="stat-card sc-inprogress"><div class="stat-num">${byStatus.inprogress}</div><div class="stat-lbl">In Progress</div></div>
-      <div class="stat-card sc-monitoring"><div class="stat-num">${byStatus.monitoring}</div><div class="stat-lbl">Monitoring</div></div>
-      <div class="stat-card sc-new">       <div class="stat-num">${byStatus.new}</div>       <div class="stat-lbl">New / Incoming</div></div>
-      <div class="stat-card sc-done">      <div class="stat-num">${done.length}</div>         <div class="stat-lbl">Completed</div></div>
+      <div class="stat-card sc-backlog"><div class="stat-num">${byStatus.backlog}</div><div class="stat-lbl">Backlog</div></div>
+      <div class="stat-card sc-todo">   <div class="stat-num">${byStatus.todo}</div>   <div class="stat-lbl">To Do</div></div>
+      <div class="stat-card sc-doing">  <div class="stat-num">${byStatus.doing}</div>  <div class="stat-lbl">Doing</div></div>
+      <div class="stat-card sc-parked"> <div class="stat-num">${byStatus.parked}</div> <div class="stat-lbl">Parked</div></div>
+      <div class="stat-card sc-done">   <div class="stat-num">${done.length}</div>     <div class="stat-lbl">Completed</div></div>
     </div>
   </div>
 
@@ -1137,7 +1169,8 @@ export function exportData() {
 export async function init() {
   await seedIfEmpty();
   await loadTasks();
-  await migrateLegacyCategories(); // one-time migration; no-op once all tasks are moved
+  await migrateLegacyStatuses();   // converts old status/priority values to Kanban + Covey
+  await migrateLegacyCategories(); // consolidates retired category names into HR / Legal
   startPolling();
 
   document.getElementById("modal").addEventListener("click", (e) => {
@@ -1149,7 +1182,7 @@ export async function init() {
   document.getElementById("m-title").addEventListener("keydown", (e) => {
     if (e.key === "Enter") addTask();
   });
-  ["f-status", "f-site", "f-cat"].forEach((id) => {
+  ["f-status", "f-priority", "f-site", "f-cat"].forEach((id) => {
     document.getElementById(id).addEventListener("change", render);
   });
   document.getElementById("f-search").addEventListener("input", render);
