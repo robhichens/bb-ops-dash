@@ -324,6 +324,16 @@ function renderTaskCard(t) {
             </div>
           </div>
           <div class="det-row">
+            <span class="det-label">Priority</span>
+            <div class="status-btns">
+              <button class="sb${t.priority === "q1" ? " active-q1" : ""}" data-set-priority="${t.id}|q1" title="Urgent &amp; Important">Q1</button>
+              <button class="sb${t.priority === "q2" ? " active-q2" : ""}" data-set-priority="${t.id}|q2" title="Important, Not Urgent">Q2</button>
+              <button class="sb${t.priority === "q3" ? " active-q3" : ""}" data-set-priority="${t.id}|q3" title="Urgent, Not Important">Q3</button>
+              <button class="sb${t.priority === "q4" ? " active-q4" : ""}" data-set-priority="${t.id}|q4" title="Not Urgent, Not Important">Q4</button>
+              <button class="sb${!t.priority ? " active-none" : ""}" data-set-priority="${t.id}|">None</button>
+            </div>
+          </div>
+          <div class="det-row">
             <span class="det-label">Boss report</span>
             <label class="hide-toggle-label">
               <input type="checkbox" class="hide-report-toggle" data-report-id="${t.id}"${t.hiddenFromReport ? " checked" : ""}>
@@ -708,6 +718,16 @@ function bindListEvents() {
       e.stopPropagation();
       const [id, status] = btn.dataset.setStatus.split("|");
       handleStatusChange(id, status);
+    });
+  });
+
+  list.querySelectorAll("[data-set-priority]").forEach((btn) => {
+    btn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      const [id, priority] = btn.dataset.setPriority.split("|");
+      patchTask(id, { priority })
+        .then(() => showToast(priority ? `Priority set to ${priority.toUpperCase()}` : "Priority cleared"))
+        .catch(() => showToast("Error updating priority"));
     });
   });
 

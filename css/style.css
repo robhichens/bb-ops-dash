@@ -224,6 +224,11 @@ textarea.note-area:focus { border-color: var(--accent); background: var(--surfac
 .sb.active-doing   { background: var(--amber-bg);   color: var(--amber);  border-color: var(--amber); }
 .sb.active-parked  { background: var(--purple-bg);  color: var(--purple); border-color: var(--purple); }
 .sb.active-done    { background: var(--green-bg);   color: var(--green);  border-color: var(--green); }
+.sb.active-q1      { background: var(--red-bg);     color: var(--red);    border-color: var(--red); }
+.sb.active-q2      { background: var(--blue-bg);    color: var(--blue);   border-color: var(--blue); }
+.sb.active-q3      { background: var(--amber-bg);   color: var(--amber);  border-color: var(--amber); }
+.sb.active-q4      { background: var(--surface2);   color: var(--text3);  border-color: var(--border2); }
+.sb.active-none    { background: var(--surface2);   color: var(--text2);  border-color: var(--border2); }
 
 .del-btn {
   font-family: 'DM Sans', sans-serif;
