@@ -116,5 +116,5 @@ function taskToRow(t) {
 }
 
 export const config = {
-  path: "/api/tasks/*",
+  path: "/api/tasks*",
 };
