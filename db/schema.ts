@@ -1,4 +1,4 @@
-import { pgTable, text, integer, timestamp } from "drizzle-orm/pg-core";
+import { pgTable, text, integer, boolean, timestamp } from "drizzle-orm/pg-core";
 
 export const tasks = pgTable("tasks", {
   id: text().primaryKey(),
@@ -11,5 +11,6 @@ export const tasks = pgTable("tasks", {
   deps: text().notNull().default(""),
   dueDate: text("due_date").notNull().default(""),
   taskOrder: integer("task_order").notNull().default(0),
+  hiddenFromReport: boolean("hidden_from_report").notNull().default(false),
   updatedAt: timestamp("updated_at").defaultNow(),
 });

@@ -1,0 +1,744 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Enroll Now — Bright Beginnings Preschool</title>
+  <meta name="description" content="Bright Beginnings Preschool — Now enrolling for Summer & Fall in Crozet, Mill Creek, and Forest Lakes. Schedule a tour today.">
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #f5f3ef;
+      --surface: #ffffff;
+      --surface2: #f0ede8;
+      --border: #e2ddd6;
+      --border2: #ccc8c0;
+      --text: #1a1816;
+      --text2: #6b6560;
+      --text3: #9b958f;
+      --accent: #2d5a3d;
+      --accent-dark: #1f3f2b;
+      --accent-light: #e8f0eb;
+      --accent-mid: #4a8a60;
+      --red: #c0392b;
+      --amber: #b7650a;
+      --amber-bg: #fdf5e8;
+      --radius: 12px;
+      --radius-sm: 8px;
+      --radius-lg: 20px;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'DM Sans', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      font-size: 15px;
+      line-height: 1.6;
+    }
+
+    /* ── Nav ── */
+    nav {
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      padding: 0 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      height: 58px;
+      position: sticky;
+      top: 0;
+      z-index: 50;
+    }
+    .nav-brand {
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--accent);
+      letter-spacing: -0.2px;
+    }
+    .nav-brand span {
+      font-family: 'DM Mono', monospace;
+      font-size: 10px;
+      font-weight: 400;
+      color: var(--text3);
+      display: block;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      margin-top: -2px;
+    }
+    .nav-links {
+      display: flex;
+      gap: 24px;
+      align-items: center;
+      list-style: none;
+    }
+    .nav-links a {
+      font-size: 13px;
+      color: var(--text2);
+      text-decoration: none;
+      font-weight: 500;
+      transition: color 0.12s;
+    }
+    .nav-links a:hover { color: var(--accent); }
+    .nav-cta {
+      background: var(--accent);
+      color: #fff !important;
+      padding: 7px 16px;
+      border-radius: var(--radius-sm);
+      font-size: 13px !important;
+    }
+    .nav-cta:hover { background: var(--accent-dark); color: #fff !important; }
+
+    /* ── Hero ── */
+    .hero {
+      background: var(--accent);
+      color: #fff;
+      padding: 80px 24px 72px;
+      text-align: center;
+    }
+    .hero-eyebrow {
+      font-family: 'DM Mono', monospace;
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.18em;
+      opacity: 0.75;
+      margin-bottom: 18px;
+    }
+    .hero h1 {
+      font-size: clamp(32px, 5vw, 52px);
+      font-weight: 700;
+      letter-spacing: -0.8px;
+      line-height: 1.15;
+      max-width: 640px;
+      margin: 0 auto 20px;
+    }
+    .hero p {
+      font-size: 17px;
+      opacity: 0.85;
+      max-width: 500px;
+      margin: 0 auto 36px;
+      line-height: 1.6;
+    }
+    .hero-actions {
+      display: flex;
+      gap: 12px;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+    .btn-white {
+      background: #fff;
+      color: var(--accent);
+      font-family: 'DM Sans', sans-serif;
+      font-size: 14px;
+      font-weight: 600;
+      padding: 13px 28px;
+      border-radius: var(--radius-sm);
+      border: none;
+      cursor: pointer;
+      text-decoration: none;
+      display: inline-block;
+      transition: opacity 0.12s;
+    }
+    .btn-white:hover { opacity: 0.9; }
+    .btn-outline {
+      background: transparent;
+      color: #fff;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 14px;
+      font-weight: 500;
+      padding: 13px 28px;
+      border-radius: var(--radius-sm);
+      border: 1.5px solid rgba(255,255,255,0.5);
+      cursor: pointer;
+      text-decoration: none;
+      display: inline-block;
+      transition: border-color 0.12s, background 0.12s;
+    }
+    .btn-outline:hover { border-color: #fff; background: rgba(255,255,255,0.08); }
+
+    /* ── Badge bar ── */
+    .badge-bar {
+      background: var(--accent-dark);
+      padding: 14px 24px;
+      display: flex;
+      justify-content: center;
+      gap: 32px;
+      flex-wrap: wrap;
+    }
+    .badge-item {
+      font-family: 'DM Mono', monospace;
+      font-size: 11px;
+      color: rgba(255,255,255,0.7);
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      display: flex;
+      align-items: center;
+      gap: 7px;
+    }
+    .badge-item::before {
+      content: "✓";
+      color: rgba(255,255,255,0.5);
+    }
+
+    /* ── Sections ── */
+    .section { padding: 72px 24px; max-width: 960px; margin: 0 auto; }
+    .section-sm { padding: 48px 24px; max-width: 960px; margin: 0 auto; }
+
+    .section-label {
+      font-family: 'DM Mono', monospace;
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.15em;
+      color: var(--accent);
+      margin-bottom: 10px;
+    }
+    h2 {
+      font-size: clamp(24px, 3.5vw, 36px);
+      font-weight: 700;
+      letter-spacing: -0.4px;
+      line-height: 1.2;
+      margin-bottom: 14px;
+    }
+    .section-intro {
+      font-size: 16px;
+      color: var(--text2);
+      max-width: 580px;
+      line-height: 1.65;
+      margin-bottom: 48px;
+    }
+    .divider { border: none; border-top: 1px solid var(--border); margin: 0; }
+
+    /* ── Programs grid ── */
+    .programs-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 16px;
+    }
+    .program-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 24px 20px;
+      transition: border-color 0.15s, box-shadow 0.15s;
+    }
+    .program-card:hover {
+      border-color: var(--accent);
+      box-shadow: 0 4px 20px rgba(45,90,61,0.08);
+    }
+    .program-age {
+      font-family: 'DM Mono', monospace;
+      font-size: 11px;
+      color: var(--accent);
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      margin-bottom: 8px;
+    }
+    .program-name {
+      font-size: 17px;
+      font-weight: 600;
+      margin-bottom: 8px;
+    }
+    .program-desc {
+      font-size: 13px;
+      color: var(--text2);
+      line-height: 1.5;
+    }
+    .program-icon {
+      font-size: 28px;
+      margin-bottom: 12px;
+      display: block;
+    }
+
+    /* ── Locations ── */
+    .locations-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 16px;
+    }
+    .location-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+    }
+    .location-header {
+      padding: 20px 22px 16px;
+      border-bottom: 1px solid var(--border);
+    }
+    .location-tag {
+      font-family: 'DM Mono', monospace;
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--text3);
+      margin-bottom: 5px;
+    }
+    .location-name {
+      font-size: 18px;
+      font-weight: 600;
+    }
+    .location-body {
+      padding: 16px 22px 20px;
+    }
+    .location-detail {
+      font-size: 13px;
+      color: var(--text2);
+      display: flex;
+      gap: 8px;
+      align-items: flex-start;
+      margin-bottom: 8px;
+    }
+    .location-detail:last-child { margin-bottom: 0; }
+    .loc-icon { font-size: 14px; flex-shrink: 0; margin-top: 1px; }
+
+    /* ── Why BB ── */
+    .why-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 32px;
+    }
+    .why-item {}
+    .why-num {
+      font-family: 'DM Mono', monospace;
+      font-size: 11px;
+      color: var(--accent);
+      margin-bottom: 10px;
+      letter-spacing: 0.05em;
+    }
+    .why-title {
+      font-size: 16px;
+      font-weight: 600;
+      margin-bottom: 8px;
+    }
+    .why-desc {
+      font-size: 13px;
+      color: var(--text2);
+      line-height: 1.6;
+    }
+
+    /* ── Open House ── */
+    .open-house-band {
+      background: var(--accent-light);
+      border-top: 1px solid #c8dece;
+      border-bottom: 1px solid #c8dece;
+      padding: 40px 24px;
+    }
+    .open-house-inner {
+      max-width: 960px;
+      margin: 0 auto;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 32px;
+      flex-wrap: wrap;
+    }
+    .open-house-text .section-label { color: var(--accent); }
+    .open-house-text h2 { font-size: 26px; color: var(--accent-dark); }
+    .open-house-text p { font-size: 14px; color: var(--text2); margin-top: 6px; }
+    .open-house-dates {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .oh-date {
+      background: var(--surface);
+      border: 1px solid #c8dece;
+      border-radius: var(--radius-sm);
+      padding: 12px 20px;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+    .oh-day {
+      font-size: 20px;
+      font-weight: 700;
+      color: var(--accent);
+      font-family: 'DM Mono', monospace;
+      min-width: 32px;
+    }
+    .oh-info { font-size: 13px; color: var(--text); }
+    .oh-info strong { font-weight: 500; display: block; }
+    .oh-info span { color: var(--text2); font-size: 12px; }
+
+    /* ── CTA band ── */
+    .cta-band {
+      background: var(--text);
+      color: #fff;
+      padding: 72px 24px;
+      text-align: center;
+    }
+    .cta-band h2 { color: #fff; font-size: 32px; margin-bottom: 12px; }
+    .cta-band p { color: rgba(255,255,255,0.65); font-size: 16px; margin-bottom: 32px; }
+
+    /* ── Enrollment urgency ── */
+    .urgency-banner {
+      background: var(--amber-bg);
+      border: 1px solid #e8b56a;
+      border-radius: var(--radius-sm);
+      padding: 12px 18px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 48px;
+      font-size: 13px;
+      color: var(--amber);
+      font-weight: 500;
+    }
+
+    /* ── Testimonials ── */
+    .testimonials-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 16px;
+    }
+    .testimonial {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 24px;
+    }
+    .testimonial-text {
+      font-size: 14px;
+      color: var(--text);
+      line-height: 1.65;
+      margin-bottom: 16px;
+      font-style: italic;
+    }
+    .testimonial-author {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text2);
+      font-family: 'DM Mono', monospace;
+    }
+
+    /* ── Footer ── */
+    footer {
+      background: var(--surface);
+      border-top: 1px solid var(--border);
+      padding: 28px 24px;
+      text-align: center;
+    }
+    .footer-brand {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--accent);
+      margin-bottom: 4px;
+    }
+    .footer-sub {
+      font-family: 'DM Mono', monospace;
+      font-size: 11px;
+      color: var(--text3);
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+    }
+    .footer-links {
+      margin-top: 14px;
+      display: flex;
+      justify-content: center;
+      gap: 20px;
+      flex-wrap: wrap;
+    }
+    .footer-links a {
+      font-size: 12px;
+      color: var(--text3);
+      text-decoration: none;
+    }
+    .footer-links a:hover { color: var(--accent); }
+
+    /* ── Responsive ── */
+    @media (max-width: 640px) {
+      .nav-links { display: none; }
+      .hero { padding: 56px 20px 48px; }
+      .section, .section-sm { padding: 48px 20px; }
+      .open-house-inner { flex-direction: column; }
+      .open-house-dates { width: 100%; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- Navigation -->
+<nav>
+  <div class="nav-brand">
+    Bright Beginnings
+    <span>Charlottesville, Virginia</span>
+  </div>
+  <ul class="nav-links">
+    <li><a href="#programs">Programs</a></li>
+    <li><a href="#locations">Locations</a></li>
+    <li><a href="#why">Why BB</a></li>
+    <li><a href="request.html" class="nav-cta">Schedule a Tour</a></li>
+  </ul>
+</nav>
+
+<!-- Hero -->
+<section class="hero">
+  <div class="hero-eyebrow">Now Enrolling · Summer &amp; Fall 2025</div>
+  <h1>A great start begins here.</h1>
+  <p>Bright Beginnings offers nurturing, play-based early childhood education at three convenient locations across Charlottesville.</p>
+  <div class="hero-actions">
+    <a href="request.html" class="btn-white">Schedule a Tour</a>
+    <a href="#programs" class="btn-outline">See Our Programs</a>
+  </div>
+</section>
+
+<!-- Badge bar -->
+<div class="badge-bar">
+  <div class="badge-item">Licensed &amp; Inspected</div>
+  <div class="badge-item">3 Convenient Locations</div>
+  <div class="badge-item">Infant to Pre-K</div>
+  <div class="badge-item">Summer Camp Available</div>
+  <div class="badge-item">Corporate Partnerships</div>
+</div>
+
+<hr class="divider">
+
+<!-- Programs -->
+<div class="section" id="programs">
+  <div class="section-label">Our Programs</div>
+  <h2>Care &amp; learning at every age</h2>
+  <p class="section-intro">From your baby's first days to pre-kindergarten readiness, we offer structured programs tailored to each developmental stage.</p>
+
+  <div class="urgency-banner">
+    &#9888;&#xFE0E; Limited spots remain for Summer 2025 — families enrolling now get first access to Fall slots.
+  </div>
+
+  <div class="programs-grid">
+    <div class="program-card">
+      <span class="program-icon">&#128163;</span>
+      <div class="program-age">6 weeks – 12 months</div>
+      <div class="program-name">Infant Care</div>
+      <div class="program-desc">Small ratios and consistent caregivers in a warm, responsive environment built around your baby's individual schedule.</div>
+    </div>
+    <div class="program-card">
+      <span class="program-icon">&#129336;</span>
+      <div class="program-age">12 – 24 months</div>
+      <div class="program-name">Young Toddlers</div>
+      <div class="program-desc">Exploration, language, and social skills in a safe space designed to grow with curious, mobile toddlers.</div>
+    </div>
+    <div class="program-card">
+      <span class="program-icon">&#127774;</span>
+      <div class="program-age">2 – 3 years</div>
+      <div class="program-name">Toddler Program</div>
+      <div class="program-desc">Daily routines, creative play, and early literacy lay the groundwork for confident learners.</div>
+    </div>
+    <div class="program-card">
+      <span class="program-icon">&#127757;</span>
+      <div class="program-age">3 – 4 years</div>
+      <div class="program-name">Preschool</div>
+      <div class="program-desc">A structured, project-based curriculum that builds independence, curiosity, and kindergarten readiness.</div>
+    </div>
+    <div class="program-card">
+      <span class="program-icon">&#127775;</span>
+      <div class="program-age">4 – 5 years</div>
+      <div class="program-name">Pre-K</div>
+      <div class="program-desc">Advanced literacy, numeracy, and social-emotional learning prepare children for a strong kindergarten start.</div>
+    </div>
+    <div class="program-card" style="border-color: var(--accent); background: var(--accent-light);">
+      <span class="program-icon">&#9728;&#xFE0F;</span>
+      <div class="program-age">Seasonal Program</div>
+      <div class="program-name">Summer Camp</div>
+      <div class="program-desc">Themed weekly camps for ages 2–5 featuring outdoor play, arts and crafts, water activities, and special guests.</div>
+    </div>
+  </div>
+</div>
+
+<hr class="divider">
+
+<!-- Locations -->
+<div class="section" id="locations">
+  <div class="section-label">Where We Are</div>
+  <h2>Three locations, one community</h2>
+  <p class="section-intro">All Bright Beginnings sites are conveniently located throughout the greater Charlottesville area — close to home, close to work.</p>
+
+  <div class="locations-grid">
+    <div class="location-card">
+      <div class="location-header">
+        <div class="location-tag">Crozet</div>
+        <div class="location-name">Bright Beginnings Crozet</div>
+      </div>
+      <div class="location-body">
+        <div class="location-detail">
+          <span class="loc-icon">&#128205;</span>
+          <span>Crozet, VA — Western Albemarle corridor</span>
+        </div>
+        <div class="location-detail">
+          <span class="loc-icon">&#128337;</span>
+          <span>Full-day &amp; part-time options available</span>
+        </div>
+        <div class="location-detail">
+          <span class="loc-icon">&#127968;</span>
+          <span>Infant through Pre-K</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="location-card">
+      <div class="location-header">
+        <div class="location-tag">Mill Creek</div>
+        <div class="location-name">Bright Beginnings Mill Creek</div>
+      </div>
+      <div class="location-body">
+        <div class="location-detail">
+          <span class="loc-icon">&#128205;</span>
+          <span>Mill Creek, VA — South Charlottesville</span>
+        </div>
+        <div class="location-detail">
+          <span class="loc-icon">&#128337;</span>
+          <span>Full-day &amp; part-time options available</span>
+        </div>
+        <div class="location-detail">
+          <span class="loc-icon">&#127968;</span>
+          <span>Infant through Pre-K</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="location-card">
+      <div class="location-header">
+        <div class="location-tag">Forest Lakes</div>
+        <div class="location-name">Bright Beginnings Forest Lakes</div>
+      </div>
+      <div class="location-body">
+        <div class="location-detail">
+          <span class="loc-icon">&#128205;</span>
+          <span>Forest Lakes, VA — North Charlottesville</span>
+        </div>
+        <div class="location-detail">
+          <span class="loc-icon">&#128337;</span>
+          <span>Full-day &amp; part-time options available</span>
+        </div>
+        <div class="location-detail">
+          <span class="loc-icon">&#127968;</span>
+          <span>Infant through Pre-K</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<hr class="divider">
+
+<!-- Why BB -->
+<div class="section" id="why">
+  <div class="section-label">Why Bright Beginnings</div>
+  <h2>More than childcare.</h2>
+  <p class="section-intro">We believe the early years are the most important. Everything we do is built around that conviction.</p>
+
+  <div class="why-grid">
+    <div class="why-item">
+      <div class="why-num">01</div>
+      <div class="why-title">Low teacher-to-child ratios</div>
+      <div class="why-desc">Every child gets the individual attention they deserve. We hold ourselves to ratios that exceed Virginia licensing requirements.</div>
+    </div>
+    <div class="why-item">
+      <div class="why-num">02</div>
+      <div class="why-title">Consistent, experienced staff</div>
+      <div class="why-desc">Children thrive on consistency. We invest in training and retention so your child sees familiar, caring faces every day.</div>
+    </div>
+    <div class="why-item">
+      <div class="why-num">03</div>
+      <div class="why-title">Structured curriculum</div>
+      <div class="why-desc">Our age-appropriate curriculum is built around learning through play — developing language, motor skills, and social confidence in every classroom.</div>
+    </div>
+    <div class="why-item">
+      <div class="why-num">04</div>
+      <div class="why-title">Parent communication</div>
+      <div class="why-desc">Stay connected to your child's day with real-time updates, photos, and direct access to your child's teacher through our parent app.</div>
+    </div>
+    <div class="why-item">
+      <div class="why-num">05</div>
+      <div class="why-title">Employer partnerships</div>
+      <div class="why-desc">We partner with local employers to offer childcare benefits and priority enrollment. Ask us about corporate sponsorship options.</div>
+    </div>
+    <div class="why-item">
+      <div class="why-num">06</div>
+      <div class="why-title">Summer camp that kids love</div>
+      <div class="why-desc">Our themed summer weeks keep children engaged, active, and learning all summer long — no summer slide here.</div>
+    </div>
+  </div>
+</div>
+
+<hr class="divider">
+
+<!-- Testimonials -->
+<div class="section">
+  <div class="section-label">Families Say</div>
+  <h2>Trusted by Charlottesville families</h2>
+  <br>
+  <div class="testimonials-grid">
+    <div class="testimonial">
+      <div class="testimonial-text">"Our daughter has been at Bright Beginnings since she was four months old. The teachers feel like family. She absolutely loves going every morning."</div>
+      <div class="testimonial-author">Parent · Crozet Location</div>
+    </div>
+    <div class="testimonial">
+      <div class="testimonial-text">"When we moved to Charlottesville, choosing a preschool felt overwhelming. A coworker recommended BB and it was the best call we ever made."</div>
+      <div class="testimonial-author">Parent · Forest Lakes Location</div>
+    </div>
+    <div class="testimonial">
+      <div class="testimonial-text">"Summer camp was incredible. My son asked to go back every single day — and he came home knowing new songs, new friends, and new things every week."</div>
+      <div class="testimonial-author">Parent · Mill Creek Location</div>
+    </div>
+  </div>
+</div>
+
+<!-- Open Houses -->
+<div class="open-house-band">
+  <div class="open-house-inner">
+    <div class="open-house-text">
+      <div class="section-label">Open Houses</div>
+      <h2>Come see us in person.</h2>
+      <p>Tour our classrooms, meet our directors, and ask all your questions. No appointment needed.</p>
+    </div>
+    <div class="open-house-dates">
+      <div class="oh-date">
+        <div class="oh-day">MON</div>
+        <div class="oh-info">
+          <strong>Crozet Open House</strong>
+          <span>Mondays · 9 am – 11 am</span>
+        </div>
+      </div>
+      <div class="oh-date">
+        <div class="oh-day">WED</div>
+        <div class="oh-info">
+          <strong>Mill Creek Open House</strong>
+          <span>Wednesdays · 9 am – 11 am</span>
+        </div>
+      </div>
+      <div class="oh-date">
+        <div class="oh-day">FRI</div>
+        <div class="oh-info">
+          <strong>Forest Lakes Open House</strong>
+          <span>Fridays · 9 am – 11 am</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- CTA -->
+<div class="cta-band">
+  <div class="section-label" style="color:rgba(255,255,255,0.5)">Take the next step</div>
+  <h2>Ready to get started?</h2>
+  <p>Spots for Summer and Fall 2025 are filling quickly. Reach out today to reserve your child's place.</p>
+  <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap">
+    <a href="request.html" class="btn-white">Schedule a Tour</a>
+    <a href="request.html" class="btn-outline">Submit a Question</a>
+  </div>
+</div>
+
+<!-- Footer -->
+<footer>
+  <div class="footer-brand">Bright Beginnings Preschool</div>
+  <div class="footer-sub">Charlottesville, Virginia &nbsp;·&nbsp; Crozet &nbsp;·&nbsp; Mill Creek &nbsp;·&nbsp; Forest Lakes</div>
+  <div class="footer-links">
+    <a href="index.html">Staff Dashboard</a>
+    <a href="request.html">Work Request Portal</a>
+    <a href="#programs">Programs</a>
+    <a href="#locations">Locations</a>
+  </div>
+</footer>
+
+</body>
+</html>

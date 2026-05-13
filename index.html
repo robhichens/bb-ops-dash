@@ -18,6 +18,7 @@
     </div>
     <div class="header-right">
       <button class="btn" id="btn-digest">Weekly digest</button>
+      <button class="btn" id="btn-report">Boss report</button>
       <button class="btn btn-primary" id="btn-add">+ Add task</button>
     </div>
   </div>
@@ -75,15 +76,15 @@
       <select id="m-cat">
         <option>Website & Digital</option>
         <option>Marketing & Enrollment</option>
-        <option>Legal / Incident</option>
         <option>Training and Professional Development</option>
         <option>Hiring & Onboarding</option>
         <option>Enrollment / Move-ups</option>
         <option>Operations / Tech</option>
-        <option>Legal / HR</option>
-        <option>HR / Benefits</option>
+        <option>HR / Legal</option>
         <option>Playground Projects</option>
         <option>Classroom Projects</option>
+        <option>Classroom Environment</option>
+        <option>Facilities Maintenance</option>
         <option>Events and Community</option>
         <option>Other</option>
       </select>
@@ -170,7 +171,7 @@
 
 <!-- App — ES module -->
 <script type="module">
-  import { init, openModal, closeModal, addTask, showDigest, closeDigest } from "./js/app.js";
+  import { init, openModal, closeModal, addTask, showDigest, closeDigest, openBossReport } from "./js/app.js";
   import { initVoiceAgent } from "./js/voice-agent.js";
 
   document.getElementById("btn-add").addEventListener("click", openModal);
@@ -178,6 +179,7 @@
   document.getElementById("btn-confirm-add").addEventListener("click", addTask);
   document.getElementById("btn-digest").addEventListener("click", showDigest);
   document.getElementById("btn-close-digest").addEventListener("click", closeDigest);
+  document.getElementById("btn-report").addEventListener("click", openBossReport);
 
   init();
   initVoiceAgent();

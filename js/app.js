@@ -8,11 +8,14 @@ import { DEFAULT_TASKS } from "./data.js";
 // ─── Constants ───────────────────────────────────────────────
 const SITES = { cr: "Crozet", mc: "Mill Creek", fl: "Forest Lakes", all: "All sites" };
 const CAT_ORDER = [
-  "Website & Digital", "Marketing & Enrollment", "Legal / Incident",
+  "Website & Digital", "Marketing & Enrollment",
   "Training and Professional Development", "Hiring & Onboarding", "Enrollment / Move-ups",
-  "Operations / Tech", "Legal / HR", "HR / Benefits", "Playground Projects",
-  "Classroom Projects", "Events and Community", "Other",
+  "Operations / Tech", "HR / Legal", "Playground Projects",
+  "Classroom Projects", "Classroom Environment", "Facilities Maintenance",
+  "Events and Community", "Other",
 ];
+// Legacy category names — tasks in these will be auto-migrated to "HR / Legal" on load
+const LEGACY_CATS = new Set(["Legal / Incident", "Legal / HR", "HR / Benefits"]);
 const DONE_KEY = "__done__";
 const POLL_INTERVAL = 10000;
 
@@ -91,6 +94,21 @@ function startPolling() {
     if (document.activeElement?.classList.contains("note-area")) return;
     loadTasks().catch(() => {});
   }, POLL_INTERVAL);
+}
+
+// ─── One-time category migration ─────────────────────────────
+// Moves tasks from retired categories to HR / Legal on first load.
+// Safe to run every time — skips if nothing needs moving.
+async function migrateLegacyCategories() {
+  const toMigrate = tasks.filter(t => LEGACY_CATS.has(t.category));
+  if (!toMigrate.length) return;
+  console.log(`Migrating ${toMigrate.length} task(s) from legacy categories to HR / Legal…`);
+  const operations = toMigrate.map(t => ({
+    type: "update",
+    id: t.id,
+    fields: { category: "HR / Legal" },
+  }));
+  await batchUpdate(operations); // batchUpdate calls loadTasks() at the end
 }
 
 // ─── Date helpers ────────────────────────────────────────────
@@ -230,13 +248,14 @@ function renderTaskCard(t) {
         <div class="task-main">
           <div class="task-title-row">
             ${t.priority ? priorityFlag(t.priority) : ""}
-            <span class="task-name">${t.title}</span>
+            <span class="task-name" data-editable-title="${t.id}" title="Double-click to edit">${t.title}</span>
           </div>
           <div class="task-meta">
             ${statusBadge(t.status)}
             ${siteBadge(t.site)}
             ${t.dueDate ? dueDateBadge(t.dueDate) : ""}
             ${updatedStr ? `<span class="updated-at">updated ${updatedStr}</span>` : ""}
+            ${t.hiddenFromReport ? `<span class="hidden-badge" title="This task is hidden from the boss report"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg> hidden</span>` : ""}
           </div>
         </div>
         <svg class="chevron" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5">
@@ -271,6 +290,13 @@ function renderTaskCard(t) {
               <button class="sb${t.status === "monitoring" ? " active-monitoring" : ""}" data-set-status="${t.id}|monitoring">Monitoring</button>
               <button class="sb${t.status === "done" ? " active-done" : ""}" data-set-status="${t.id}|done">Done</button>
             </div>
+          </div>
+          <div class="det-row">
+            <span class="det-label">Boss report</span>
+            <label class="hide-toggle-label">
+              <input type="checkbox" class="hide-report-toggle" data-report-id="${t.id}"${t.hiddenFromReport ? " checked" : ""}>
+              Hide from boss report
+            </label>
           </div>
           <div class="det-row">
             <span class="det-label"></span>
@@ -347,6 +373,60 @@ function render() {
 
   list.innerHTML = html;
   bindListEvents();
+}
+
+// ─── Inline title editing ────────────────────────────────────
+// Double-click a task title to edit it in place.
+// Enter or blur saves; Escape cancels.
+function makeTitleEditable(span) {
+  span.addEventListener("dblclick", async (e) => {
+    e.stopPropagation();
+    const id = span.dataset.editableTitle;
+    const original = span.textContent;
+
+    const input = document.createElement("input");
+    input.type = "text";
+    input.value = original;
+    input.className = "title-edit-input";
+    span.replaceWith(input);
+    input.focus();
+    input.select();
+
+    let done = false;
+
+    const restore = (text = original) => {
+      if (done) return;
+      done = true;
+      const newSpan = document.createElement("span");
+      newSpan.className = "task-name";
+      newSpan.dataset.editableTitle = id;
+      newSpan.title = "Double-click to edit";
+      newSpan.textContent = text;
+      makeTitleEditable(newSpan);
+      input.replaceWith(newSpan);
+    };
+
+    const commit = async () => {
+      if (done) return;
+      done = true;
+      const val = input.value.trim();
+      if (!val || val === original) { restore(original); return; }
+      try {
+        await patchTask(id, { title: val });
+        showToast("Title updated");
+        // patchTask → loadTasks → render() rebuilds the DOM automatically
+      } catch {
+        showToast("Error saving title");
+        restore(original);
+      }
+    };
+
+    input.addEventListener("keydown", (ke) => {
+      if (ke.key === "Enter") { ke.preventDefault(); commit(); }
+      if (ke.key === "Escape") { done = true; restore(original); }
+    });
+    input.addEventListener("blur", commit);
+  });
 }
 
 // ─── Drag & drop helpers ─────────────────────────────────────
@@ -609,6 +689,20 @@ function bindListEvents() {
         .catch(() => showToast("Error deleting task"));
     });
   });
+
+  // Hide-from-report toggle
+  list.querySelectorAll(".hide-report-toggle").forEach((checkbox) => {
+    checkbox.addEventListener("change", (e) => {
+      e.stopPropagation();
+      const id = checkbox.dataset.reportId;
+      patchTask(id, { hiddenFromReport: checkbox.checked })
+        .then(() => showToast(checkbox.checked ? "Hidden from boss report" : "Visible in boss report"))
+        .catch(() => showToast("Error updating report visibility"));
+    });
+  });
+
+  // Inline title editing — double-click to edit
+  list.querySelectorAll("[data-editable-title]").forEach(makeTitleEditable);
 }
 
 async function handleStatusChange(id, newStatus) {
@@ -782,6 +876,254 @@ export async function addTask() {
   }
 }
 
+// ─── Boss report ─────────────────────────────────────────────
+function statusLabel(s) {
+  return { critical: "Critical", inprogress: "In Progress", monitoring: "Monitoring", done: "Done", new: "New" }[s] || s;
+}
+
+export function openBossReport() {
+  const now = new Date();
+  const weekFromNow = new Date(now.getTime() + 7 * 86400000);
+
+  // Exclude tasks flagged as hidden
+  const visible  = tasks.filter(t => !t.hiddenFromReport);
+  const active   = visible.filter(t => t.status !== "done");
+  const done     = visible.filter(t => t.status === "done");
+  const critical = active.filter(t => t.status === "critical");
+  const overdue  = active.filter(t => t.dueDate && new Date(t.dueDate + "T00:00:00") < now);
+  const dueSoon  = active
+    .filter(t => t.dueDate && new Date(t.dueDate + "T00:00:00") >= now && new Date(t.dueDate + "T00:00:00") <= weekFromNow)
+    .sort((a, b) => new Date(a.dueDate) - new Date(b.dueDate));
+
+  const byStatus = {
+    critical:   active.filter(t => t.status === "critical").length,
+    inprogress: active.filter(t => t.status === "inprogress").length,
+    monitoring: active.filter(t => t.status === "monitoring").length,
+    new:        active.filter(t => t.status === "new").length,
+  };
+
+  // Category grouping — same order as the main dashboard
+  const catSet = new Set(active.map(t => t.category));
+  const cats   = getCategoryOrder(catSet);
+  const groups = {};
+  active.forEach(t => { if (!groups[t.category]) groups[t.category] = []; groups[t.category].push(t); });
+
+  // ── Narrative paragraph ──────────────────────────────────────
+  const dateStr = now.toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric", year: "numeric" });
+  let narrative = `As of ${dateStr}, the operations team is managing <strong>${active.length} active task${active.length !== 1 ? "s" : ""}</strong> across ${cats.length} area${cats.length !== 1 ? "s" : ""}.`;
+  if (critical.length) narrative += ` <strong>${critical.length} item${critical.length !== 1 ? "s are" : " is"} critical</strong> and require immediate attention.`;
+  if (overdue.length)  narrative += ` <strong>${overdue.length} task${overdue.length !== 1 ? "s are" : " is"} overdue.</strong>`;
+  if (done.length)     narrative += ` ${done.length} task${done.length !== 1 ? "s have" : " has"} been completed.`;
+
+  // ── Critical items table ──────────────────────────────────────
+  const criticalSection = critical.length ? `
+    <div class="r-section">
+      <h2>Critical Items <span class="r-badge r-badge-crit">${critical.length}</span></h2>
+      <table class="r-table">
+        <thead><tr><th>Task</th><th>Area</th><th>Site</th><th>Notes</th></tr></thead>
+        <tbody>
+          ${critical.map(t => `
+            <tr class="crit-row">
+              <td class="t-title">${t.title}</td>
+              <td>${t.category}</td>
+              <td>${siteLabel(t.site)}</td>
+              <td class="t-notes">${(t.notes || "").replace(/\n/g, "<br>")}</td>
+            </tr>`).join("")}
+        </tbody>
+      </table>
+    </div>` : "";
+
+  // ── Time-sensitive table ──────────────────────────────────────
+  const timeSensitiveSection = (overdue.length || dueSoon.length) ? `
+    <div class="r-section">
+      <h2>Time-Sensitive <span class="r-badge r-badge-amber">${overdue.length + dueSoon.length}</span></h2>
+      <table class="r-table">
+        <thead><tr><th>Flag</th><th>Task</th><th>Area</th><th>Due Date</th></tr></thead>
+        <tbody>
+          ${overdue.map(t => `<tr class="overdue-row"><td class="flag-cell">⚠ Overdue</td><td class="t-title">${t.title}</td><td>${t.category}</td><td>${formatDate(t.dueDate)}</td></tr>`).join("")}
+          ${dueSoon.map(t => `<tr><td class="flag-cell due-cell">Due Soon</td><td class="t-title">${t.title}</td><td>${t.category}</td><td>${formatDate(t.dueDate)}</td></tr>`).join("")}
+        </tbody>
+      </table>
+    </div>` : "";
+
+  // ── Full task list grouped by category ────────────────────────
+  let fullList = cats.map(cat => {
+    if (!groups[cat] || !groups[cat].length) return "";
+    const rows = sortByOrder(groups[cat]).map(t => `
+      <tr>
+        <td class="t-title">${t.title}</td>
+        <td><span class="s-pill s-${t.status}">${statusLabel(t.status)}</span></td>
+        <td>${siteLabel(t.site)}</td>
+        <td>${t.dueDate ? formatDate(t.dueDate) : ""}</td>
+      </tr>`).join("");
+    return `
+      <h3 class="cat-hdg">${cat}</h3>
+      <table class="r-table">
+        <thead><tr><th>Task</th><th>Status</th><th>Site</th><th>Due</th></tr></thead>
+        <tbody>${rows}</tbody>
+      </table>`;
+  }).join("");
+
+  // ── Completed ─────────────────────────────────────────────────
+  const doneSection = done.length ? `
+    <div class="r-section">
+      <h2>Completed <span class="r-badge r-badge-done">${done.length}</span></h2>
+      <table class="r-table">
+        <thead><tr><th>Task</th><th>Area</th><th>Site</th></tr></thead>
+        <tbody>
+          ${done.map(t => `
+            <tr>
+              <td class="t-title done-title">${t.title}</td>
+              <td>${t.category}</td>
+              <td>${siteLabel(t.site)}</td>
+            </tr>`).join("")}
+        </tbody>
+      </table>
+    </div>` : "";
+
+  // ── Full HTML document ────────────────────────────────────────
+  const html = `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>BB Ops Report — ${now.toLocaleDateString()}</title>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    :root { --accent:#2d5a3d; --red:#c0392b; --amber:#b7650a; --blue:#1a4f8a; --green:#2d5a3d; --sage:#5a7a4f; }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family:'DM Sans',sans-serif; background:#fff; color:#1a1816; font-size:13px; line-height:1.5; }
+
+    /* ── Print toolbar (screen only) ── */
+    .no-print { position:fixed; top:0; left:0; right:0; background:#f5f3ef; border-bottom:1px solid #e2ddd6; padding:12px 40px; display:flex; align-items:center; gap:14px; z-index:100; }
+    .print-btn { background:var(--accent); color:#fff; border:none; padding:9px 22px; border-radius:6px; font-family:'DM Sans',sans-serif; font-size:13px; font-weight:500; cursor:pointer; }
+    .print-btn:hover { background:#1f3f2b; }
+    .print-tip { font-size:11px; color:#9b958f; }
+
+    /* ── Report wrapper ── */
+    .report { max-width:820px; margin:70px auto 80px; padding:0 40px; }
+
+    /* ── Header ── */
+    .r-header { display:flex; justify-content:space-between; align-items:flex-end; border-bottom:2px solid var(--accent); padding-bottom:14px; margin-bottom:32px; }
+    .r-header-left .brand { font-family:'DM Mono',monospace; font-size:10px; letter-spacing:0.15em; color:#9b958f; text-transform:uppercase; margin-bottom:5px; }
+    .r-header-left h1 { font-size:26px; font-weight:700; color:var(--accent); letter-spacing:-0.4px; }
+    .r-header-right { text-align:right; font-size:12px; color:#6b6560; line-height:1.75; }
+    .r-header-right .confidential { font-family:'DM Mono',monospace; font-size:10px; color:#9b958f; text-transform:uppercase; letter-spacing:0.1em; }
+
+    /* ── Status grid ── */
+    .r-section { margin-bottom:36px; }
+    .r-section h2 { font-size:12px; font-weight:600; text-transform:uppercase; letter-spacing:0.1em; color:#1a1816; border-bottom:1px solid #e2ddd6; padding-bottom:8px; margin-bottom:16px; display:flex; align-items:center; gap:8px; font-family:'DM Mono',monospace; }
+    .r-badge { font-size:11px; font-weight:500; padding:2px 8px; border-radius:100px; text-transform:none; letter-spacing:0; font-family:'DM Sans',sans-serif; }
+    .r-badge-crit { background:#fdf0ee; color:var(--red); }
+    .r-badge-amber { background:#fdf5e8; color:var(--amber); }
+    .r-badge-done  { background:#e8f0eb; color:var(--green); }
+
+    .narrative { font-size:14px; line-height:1.75; color:#1a1816; margin-bottom:22px; }
+
+    .stat-grid { display:grid; grid-template-columns:repeat(5,1fr); gap:10px; margin-bottom:4px; }
+    .stat-card { background:#f5f3ef; border-radius:8px; padding:14px 10px; text-align:center; }
+    .stat-num { font-size:26px; font-weight:700; line-height:1; }
+    .stat-lbl { font-size:10px; text-transform:uppercase; letter-spacing:0.05em; color:#6b6560; margin-top:3px; font-family:'DM Mono',monospace; }
+    .sc-critical   .stat-num { color:var(--red); }
+    .sc-inprogress .stat-num { color:var(--amber); }
+    .sc-monitoring .stat-num { color:var(--blue); }
+    .sc-new        .stat-num { color:var(--sage); }
+    .sc-done       .stat-num { color:var(--green); }
+
+    /* ── Tables ── */
+    .r-table { width:100%; border-collapse:collapse; font-size:12px; margin-bottom:4px; }
+    .r-table thead tr { background:#f5f3ef; }
+    .r-table th { text-align:left; font-family:'DM Mono',monospace; font-size:10px; text-transform:uppercase; letter-spacing:0.06em; color:#9b958f; padding:6px 10px; font-weight:500; }
+    .r-table td { padding:8px 10px; border-bottom:1px solid #f0ede8; vertical-align:top; line-height:1.4; }
+    .t-title { font-weight:500; width:42%; }
+    .t-notes { color:#6b6560; font-size:11px; width:30%; line-height:1.45; }
+    .crit-row td { background:#fff8f7; }
+    .overdue-row td { background:#fff8f7; }
+    .flag-cell { font-weight:600; font-size:11px; white-space:nowrap; }
+    .due-cell { color:var(--amber); }
+    .overdue-row .flag-cell { color:var(--red); }
+
+    .s-pill { display:inline-block; font-size:11px; font-weight:500; padding:2px 7px; border-radius:100px; white-space:nowrap; }
+    .s-critical   { background:#fdf0ee; color:var(--red); }
+    .s-inprogress { background:#fdf5e8; color:var(--amber); }
+    .s-monitoring { background:#edf3fb; color:var(--blue); }
+    .s-done       { background:#e8f0eb; color:var(--green); }
+    .s-new        { background:#d8e8c8; color:var(--sage); }
+
+    .cat-hdg { font-family:'DM Mono',monospace; font-size:11px; font-weight:600; text-transform:uppercase; letter-spacing:0.08em; color:#6b6560; margin:24px 0 8px; }
+    .cat-hdg:first-child { margin-top:0; }
+
+    .done-title { color:#9b958f; text-decoration:line-through; }
+
+    .r-footer { text-align:center; font-family:'DM Mono',monospace; font-size:10px; color:#9b958f; margin-top:60px; padding-top:16px; border-top:1px solid #e2ddd6; letter-spacing:0.06em; }
+
+    @media print {
+      .no-print { display:none !important; }
+      .report { margin-top:20px; }
+      body { font-size:11px; }
+      .r-header-left h1 { font-size:20px; }
+      .narrative { font-size:12px; }
+      .stat-num { font-size:20px; }
+      .r-table td, .r-table th { padding:5px 8px; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="no-print">
+  <button class="print-btn" onclick="window.print()">Print / Save as PDF</button>
+  <span class="print-tip">In the print dialog → choose "Save as PDF" · enable "Background graphics" for best results.</span>
+</div>
+
+<div class="report">
+
+  <div class="r-header">
+    <div class="r-header-left">
+      <div class="brand">Bright Beginnings Preschool</div>
+      <h1>Operations Report</h1>
+    </div>
+    <div class="r-header-right">
+      <div>${dateStr}</div>
+      <div>Rob Hichens · Director of Operations</div>
+      <div class="confidential">Confidential — Internal Use Only</div>
+    </div>
+  </div>
+
+  <div class="r-section">
+    <h2>Executive Summary</h2>
+    <p class="narrative">${narrative}</p>
+    <div class="stat-grid">
+      <div class="stat-card sc-critical">  <div class="stat-num">${byStatus.critical}</div>  <div class="stat-lbl">Critical</div></div>
+      <div class="stat-card sc-inprogress"><div class="stat-num">${byStatus.inprogress}</div><div class="stat-lbl">In Progress</div></div>
+      <div class="stat-card sc-monitoring"><div class="stat-num">${byStatus.monitoring}</div><div class="stat-lbl">Monitoring</div></div>
+      <div class="stat-card sc-new">       <div class="stat-num">${byStatus.new}</div>       <div class="stat-lbl">New / Incoming</div></div>
+      <div class="stat-card sc-done">      <div class="stat-num">${done.length}</div>         <div class="stat-lbl">Completed</div></div>
+    </div>
+  </div>
+
+  ${criticalSection}
+  ${timeSensitiveSection}
+
+  <div class="r-section">
+    <h2>Full Task List by Area</h2>
+    ${fullList || '<p style="color:#9b958f;font-size:12px">No active tasks.</p>'}
+  </div>
+
+  ${doneSection}
+
+  <div class="r-footer">
+    Generated ${now.toLocaleString()} &nbsp;·&nbsp; BB Ops Dashboard &nbsp;·&nbsp; Rob Hichens
+  </div>
+
+</div>
+</body>
+</html>`;
+
+  const win = window.open("", "_blank");
+  if (!win) { alert("Pop-up blocked. Please allow pop-ups for this site and try again."); return; }
+  win.document.write(html);
+  win.document.close();
+}
+
 // ─── Export ───────────────────────────────────────────────────
 export function exportData() {
   const blob = new Blob([JSON.stringify(tasks, null, 2)], { type: "application/json" });
@@ -795,6 +1137,7 @@ export function exportData() {
 export async function init() {
   await seedIfEmpty();
   await loadTasks();
+  await migrateLegacyCategories(); // one-time migration; no-op once all tasks are moved
   startPolling();
 
   document.getElementById("modal").addEventListener("click", (e) => {

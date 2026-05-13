@@ -4,4 +4,8 @@ export default defineConfig({
   dialect: "postgresql",
   schema: "./db/schema.ts",
   out: "netlify/database/migrations",
+  schemaFilter: ["public"],
+  dbCredentials: {
+    url: process.env.DATABASE_URL!,
+  },
 });
