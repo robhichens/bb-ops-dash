@@ -54,7 +54,12 @@ export default async (req) => {
   } catch (err) {
     console.error("Voice agent error:", err);
     return Response.json(
-      { error: "Failed to process request" },
+      {
+        error: "Failed to process request",
+        detail: err?.message || String(err),
+        name: err?.name,
+        status: err?.status,
+      },
       { status: 500 }
     );
   }
