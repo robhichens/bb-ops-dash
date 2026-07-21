@@ -33,13 +33,17 @@ export default async (req) => {
       return Response.json({ error: "Messages array is required" }, { status: 400 });
     }
 
-    let systemPrompt = SYSTEM_PROMPT;
+    const today = new Date().toLocaleDateString("en-CA", {
+      timeZone: "America/New_York",
+    }); // YYYY-MM-DD in Eastern time
+
+    let systemPrompt = `${SYSTEM_PROMPT}\n\nToday's date is ${today}. When the user says relative dates like "today", "tomorrow", "next Monday", or "end of the week", resolve them to an absolute YYYY-MM-DD date based on today's date.`;
     if (taskContext) {
       systemPrompt += `\n\nCurrent tasks in the system for context:\n${taskContext}`;
     }
 
     const response = await anthropic.messages.create({
-      model: "claude-opus-4-8",
+      model: "claude-haiku-4-5",
       max_tokens: 1024,
       system: systemPrompt,
       messages: messages,
